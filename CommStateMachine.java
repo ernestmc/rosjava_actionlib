@@ -28,10 +28,32 @@
 
 # Author: Stuart Glaser
 
-class CommStateMachine
-{
-  ActionGoal goal;
+
+/**
+ * State machine for the action client.
+ * 
+ * Comments:
+ *   - The state returned on a transition is actually a vector of states that should be transitioned in sequence.
+ * 
+ */
+// TODO: change class name to ClientStateMachine
+class CommStateMachine {
+  // Local class to hold the states
+  static class ClientStates {
+    final int WAITING_FOR_GOAL_ACK = 0;
+    final int PENDING = 1;
+    final int ACTIVE = 2;
+    final int WAITING_FOR_RESULT = 3;
+    final int WAITING_FOR_CANCEL_ACK = 4;
+    final int RECALLING = 5;
+    final int PREEMPTING = 6;
+    final int DONE = 7;
+    final int LOST = 8;
+  }
   
+  ActionGoal goal;
+  int state;  
+    
   
   /**
    * Constructor
@@ -63,8 +85,31 @@ class CommStateMachine
   {
   }
   
-  public void transitionTo(state)
+  // Make a state transition depending on the current client state and the goal state
+  public void transitionTo(toState)
   {
+    switch (this.state) {
+      case ClientStates.WAITING_FOR_GOAL_ACK:
+        switch (this.actionGoal.getStatus()) {
+          case ActionGoal.GoalStates.PENDING:
+          break;
+        }
+        break;
+      case ClientStates.PENDING:
+        break;
+      case ClientStates.ACTIVE:
+        break;
+      case ClientStates.WAITING_FOR_RESULT:
+        break;
+      case ClientStates.WAITING_FOR_CANCEL_ACK:
+        break;
+      case ClientStates.RECALLING:
+        break;
+      case ClientStates.PREEMPTING:
+        break;
+      case ClientStates.DONE:
+        break;
+    }
   }
   
   public void markAsLost()
