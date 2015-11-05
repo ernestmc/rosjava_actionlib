@@ -1,32 +1,15 @@
-# Copyright (c) 2015, Ernesto Corbellini, Ekumen
-# Copyright (c) 2009, Willow Garage, Inc.
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-#     * Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-#     * Redistributions in binary form must reproduce the above copyright
-#       notice, this list of conditions and the following disclaimer in the
-#       documentation and/or other materials provided with the distribution.
-#     * Neither the name of the Willow Garage, Inc. nor the names of its
-#       contributors may be used to endorse or promote products derived from
-#       this software without specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
+/**
+ * Copyright (c) 2015, Ernesto Corbellini, Ekumen
+ * 
+ * Based on actionlib code by Stuart Glaser, Willow Garage
+ * 
+ * Pending license.
+ * 
+ */
 
-# Author: Stuart Glaser
+
+
+import java.util.Vector;
 
 
 /**
@@ -40,6 +23,8 @@
 class CommStateMachine {
   // Local class to hold the states
   static class ClientStates {
+    final int INVALID_TRANSITION = -2;
+    final int NO_TRANSITION = -1;
     final int WAITING_FOR_GOAL_ACK = 0;
     final int PENDING = 1;
     final int ACTIVE = 2;
@@ -52,14 +37,17 @@ class CommStateMachine {
   }
   
   ActionGoal goal;
-  int state;  
+  int latestGoalStatus;
+  int state;
+  int nextState;
     
   
   /**
    * Constructor
    */
   //public void CommStateMachine(ActionGoal actionGoal, transition_callback?, feedback_callback?, send_goal_function, send_cancel_function)
-  public void CommStateMachine(ActionGoal actionGoal, transition_callback?, feedback_callback?, ActionGoalTrigger)
+  //public void CommStateMachine(ActionGoal actionGoal, transition_callback?, feedback_callback?, ActionGoalTrigger)
+  public void CommStateMachine(ActionGoal actionGoal)
   {
     // interface object for the callbacks?
     // store arguments locally in the object
@@ -77,21 +65,78 @@ class CommStateMachine {
     return actionGoal.goalId.id == obj.actionGoal.goalId.id;
   }
   
-  public void setState(State)
+  public void setState(int State)
   {
   }
   
-  public synchronized void updateStatus(statusArray)
+  /**
+   * Update the state of the client based on the current state and the goal state.
+   * Note: This method uses a mutex in the original implementation so we make it synchronized.
+   */
+  public synchronized void updateStatus(int statusArray)
+  {
+    int status;
+    
+    if (this.state != ClienStates.DONE)
+    {
+      status = _find_status_by_goal_id(status_array, self.action_goal.goal_id.id);
+      
+      // we haven't heard of the goal?
+      if (!status)
+      {
+        if (this.state != ClientStates.WAITING_FOR_GOAL_ACK && this.state != ClientStates.WAITING_FOR_RESULT && this.state != ClientStates.DONE)
+        {
+          markAsLost();
+        }
+        return;
+      }
+      
+      this.latestGoalStatus = status;
+      
+      // Determine the next state
+      
+      //if (this.state
+      
+    }
+    
+  }
+  
+  public void transitionTo(int toState)
   {
   }
   
-  // Make a state transition depending on the current client state and the goal state
-  public void transitionTo(toState)
+  /**
+   * Get the next state transition depending on the current client state and the goal state.
+   * Note: this replaces the transition lookup table from the original implementation.
+   */
+  private Vector getTransition(int goalStatus)
   {
-    switch (this.state) {
+    Vector stateList;
+    
+    switch (this.state)
+    {
       case ClientStates.WAITING_FOR_GOAL_ACK:
-        switch (this.actionGoal.getStatus()) {
+        switch (goalStatus)
+        {
           case ActionGoal.GoalStates.PENDING:
+            stateList.add(ClientStates.PENDING);
+            break;
+          case ActionGoal.GoalStates.ACTIVE:
+            stateList.add(ClientStates.ACTIVE);
+          break;
+          case ActionGoal.GoalStates.REJECTED:
+          break;
+          case ActionGoal.GoalStates.RECALLING:
+          break;
+          case ActionGoal.GoalStates.RECALLED:
+          break;
+          case ActionGoal.GoalStates.PREEMPTED:
+          break;
+          case ActionGoal.GoalStates.SUCCEEDED:
+          break;
+          case ActionGoal.GoalStates.ABORTED:
+          break;
+          case ActionGoal.GoalStates.PREEMPTING:
           break;
         }
         break;
@@ -116,7 +161,7 @@ class CommStateMachine {
   {
   }
   
-  public void updateResult(statusResult)
+  public void updateResult(int statusResult)
   {
   }  
   
