@@ -8,6 +8,8 @@
  */
 
 
+package com.github.ekumen.rosjava_actionlib;
+
 
 import java.util.Vector;
 
