@@ -1,10 +1,10 @@
 /**
  * Copyright (c) 2015, Ernesto Corbellini, Ekumen
- * 
+ *
  * Based on actionlib code by Stuart Glaser, Willow Garage
- * 
+ *
  * Pending license.
- * 
+ *
  */
 
 
@@ -16,34 +16,34 @@ import java.util.Vector;
 
 /**
  * State machine for the action client.
- * 
+ *
  * Comments:
  *   - The state returned on a transition is actually a vector of states that should be transitioned in sequence.
- * 
+ *
  */
 // TODO: change class name to ClientStateMachine
 class CommStateMachine {
   // Local class to hold the states
-  static class ClientStates {
-    final int INVALID_TRANSITION = -2;
-    final int NO_TRANSITION = -1;
-    final int WAITING_FOR_GOAL_ACK = 0;
-    final int PENDING = 1;
-    final int ACTIVE = 2;
-    final int WAITING_FOR_RESULT = 3;
-    final int WAITING_FOR_CANCEL_ACK = 4;
-    final int RECALLING = 5;
-    final int PREEMPTING = 6;
-    final int DONE = 7;
-    final int LOST = 8;
+  public static class ClientStates {
+    final static int INVALID_TRANSITION = -2;
+    final static int NO_TRANSITION = -1;
+    final static int WAITING_FOR_GOAL_ACK = 0;
+    final static int PENDING = 1;
+    final static int ACTIVE = 2;
+    final static int WAITING_FOR_RESULT = 3;
+    final static int WAITING_FOR_CANCEL_ACK = 4;
+    final static int RECALLING = 5;
+    final static int PREEMPTING = 6;
+    final static int DONE = 7;
+    final static int LOST = 8;
   }
-  
+
   ActionGoal goal;
   int latestGoalStatus;
   int state;
   int nextState;
-    
-  
+
+
   /**
    * Constructor
    */
@@ -53,24 +53,31 @@ class CommStateMachine {
   {
     // interface object for the callbacks?
     // store arguments locally in the object
-    // 
-    
-    goal = actionGoal;
-    
+    //
+
+    //goal = actionGoal;
+
   }
-  
+
+  // dummy consutructor for testing
+  public void CommStateMachine()
+  {
+    CommStateMachine(new ActionGoal());
+  }
+
   /*
    * Compare two objects.
    */
-  public bool equals(CommStateMachine obj)
+  public boolean equals(CommStateMachine obj)
   {
-    return actionGoal.goalId.id == obj.actionGoal.goalId.id;
+    //return actionGoal.goalId.id == obj.actionGoal.goalId.id;
+    return true;
   }
-  
+
   public void setState(int State)
   {
   }
-  
+
   /**
    * Update the state of the client based on the current state and the goal state.
    * Note: This method uses a mutex in the original implementation so we make it synchronized.
@@ -78,13 +85,13 @@ class CommStateMachine {
   public synchronized void updateStatus(int statusArray)
   {
     int status;
-    
-    if (this.state != ClienStates.DONE)
+
+    if (this.state != ClientStates.DONE)
     {
-      status = _find_status_by_goal_id(status_array, self.action_goal.goal_id.id);
-      
+      status = this.goal.findStatus(statusArray); //_find_status_by_goal_id(statusArray, self.action_goal.goal_id.id);
+
       // we haven't heard of the goal?
-      if (!status)
+      if (status == 0)
       {
         if (this.state != ClientStates.WAITING_FOR_GOAL_ACK && this.state != ClientStates.WAITING_FOR_RESULT && this.state != ClientStates.DONE)
         {
@@ -92,29 +99,29 @@ class CommStateMachine {
         }
         return;
       }
-      
+
       this.latestGoalStatus = status;
-      
+
       // Determine the next state
-      
+
       //if (this.state
-      
+
     }
-    
+
   }
-  
+
   public void transitionTo(int toState)
   {
   }
-  
+
   /**
    * Get the next state transition depending on the current client state and the goal state.
    * Note: this replaces the transition lookup table from the original implementation.
    */
   private Vector getTransition(int goalStatus)
   {
-    Vector stateList;
-    
+    Vector stateList = new Vector();
+
     switch (this.state)
     {
       case ClientStates.WAITING_FOR_GOAL_ACK:
@@ -157,14 +164,15 @@ class CommStateMachine {
       case ClientStates.DONE:
         break;
     }
+    return stateList;
   }
-  
+
   public void markAsLost()
   {
   }
-  
+
   public void updateResult(int statusResult)
   {
-  }  
-  
+  }
+
 }
