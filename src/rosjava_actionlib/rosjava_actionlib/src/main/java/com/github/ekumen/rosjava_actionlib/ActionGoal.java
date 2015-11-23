@@ -3,6 +3,8 @@ package com.github.ekumen.rosjava_actionlib;
 
 public class ActionGoal
 {
+  private int state;
+
   public static class GoalStates
   {
     public final static int PENDING = 0;  // The goal has yet to be processed by the action server
@@ -20,5 +22,13 @@ public class ActionGoal
   int findStatus(int statusArray)
   {
     return 0;
+  }
+
+  public synchronized void setState(int state) {
+    this.state = state;
+  }
+
+  public synchronized int getState() {
+    return this.state;
   }
 }
