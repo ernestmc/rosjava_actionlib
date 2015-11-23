@@ -22,20 +22,20 @@ import java.util.Vector;
  *
  */
 // TODO: change class name to ClientStateMachine
-class CommStateMachine {
+public class CommStateMachine {
   // Local class to hold the states
   public static class ClientStates {
-    final static int INVALID_TRANSITION = -2;
-    final static int NO_TRANSITION = -1;
-    final static int WAITING_FOR_GOAL_ACK = 0;
-    final static int PENDING = 1;
-    final static int ACTIVE = 2;
-    final static int WAITING_FOR_RESULT = 3;
-    final static int WAITING_FOR_CANCEL_ACK = 4;
-    final static int RECALLING = 5;
-    final static int PREEMPTING = 6;
-    final static int DONE = 7;
-    final static int LOST = 8;
+    public final static int INVALID_TRANSITION = -2;
+    public final static int NO_TRANSITION = -1;
+    public final static int WAITING_FOR_GOAL_ACK = 0;
+    public final static int PENDING = 1;
+    public final static int ACTIVE = 2;
+    public final static int WAITING_FOR_RESULT = 3;
+    public final static int WAITING_FOR_CANCEL_ACK = 4;
+    public final static int RECALLING = 5;
+    public final static int PREEMPTING = 6;
+    public final static int DONE = 7;
+    public final static int LOST = 8;
   }
 
   ActionGoal goal;
