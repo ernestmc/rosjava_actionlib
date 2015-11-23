@@ -18,7 +18,7 @@
 apply plugin: 'application'
 mainClassName = 'org.ros.RosRun'
 
-/* 
+/*
  Dependencies can be on external maven artifacts (such as rosjava_core
  here) or on sibling subprojects. Fpr external maven artifact dependencies
  it's convenient to use an open ranged dependency, but restrict it to
@@ -28,8 +28,10 @@ mainClassName = 'org.ros.RosRun'
 
 dependencies {
   /* An external maven artifact dependency */
+
   compile 'org.ros.rosjava_core:rosjava:[0.2,0.3)'
-  /* Example of a local subproject dependency */ 
+  testCompile 'junit:junit:4.12'
+
+  /* Example of a local subproject dependency */
   /* compile project(':sibling_gradle_project') */
 }
-
