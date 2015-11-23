@@ -13,7 +13,7 @@ package com.github.ekumen.rosjava_actionlib;
 /*
  * Interface class to represent the triggering actions for a goal.
  */
-class GoalTrigger
+public class GoalTrigger
 {
   public void sendGoal()
   {
