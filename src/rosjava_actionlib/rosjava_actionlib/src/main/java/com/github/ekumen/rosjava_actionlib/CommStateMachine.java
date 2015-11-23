@@ -53,29 +53,23 @@ public class CommStateMachine {
   {
     // interface object for the callbacks?
     // store arguments locally in the object
-    //
-
-    //goal = actionGoal;
-
-  }
-
-  // dummy consutructor for testing
-  public void CommStateMachine()
-  {
-    CommStateMachine(new ActionGoal());
+    this.goal = actionGoal;
   }
 
   /*
    * Compare two objects.
    */
-  public boolean equals(CommStateMachine obj)
-  {
+  public boolean equals(CommStateMachine obj) {
     //return actionGoal.goalId.id == obj.actionGoal.goalId.id;
     return true;
   }
 
-  public void setState(int State)
-  {
+  public void setState(int state) {
+    this.state = state;
+  }
+
+  public int getState() {
+    return this.state;
   }
 
   /**
