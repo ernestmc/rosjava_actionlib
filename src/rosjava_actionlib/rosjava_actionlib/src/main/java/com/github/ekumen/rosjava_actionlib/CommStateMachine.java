@@ -12,6 +12,7 @@ package com.github.ekumen.rosjava_actionlib;
 
 
 import java.util.Vector;
+import java.util.Iterator;
 
 
 /**
@@ -76,13 +77,11 @@ public class CommStateMachine {
    * Update the state of the client based on the current state and the goal state.
    * Note: This method uses a mutex in the original implementation so we make it synchronized.
    */
-  public synchronized void updateStatus(int statusArray)
+  public synchronized void updateStatus(int status)
   {
-    int status;
-
     if (this.state != ClientStates.DONE)
     {
-      status = this.goal.findStatus(statusArray); //_find_status_by_goal_id(statusArray, self.action_goal.goal_id.id);
+      /*status = this.goal.findStatus(statusArray); //_find_status_by_goal_id(statusArray, self.action_goal.goal_id.id);
 
       // we haven't heard of the goal?
       if (status == 0)
@@ -92,7 +91,7 @@ public class CommStateMachine {
           markAsLost();
         }
         return;
-      }
+      }*/
 
       this.latestGoalStatus = status;
 
@@ -106,6 +105,17 @@ public class CommStateMachine {
 
   public void transitionTo(int toState)
   {
+    Vector nextStates;
+    Iterator iterStates;
+    int state;
+
+    // transition to next states
+    nextStates = getTransition(ActionGoal.GoalStates.ACTIVE);
+    iterStates = nextStates.iterator();
+
+    while (iterStates.hasNext()) {
+      state = (int)iterStates.next();
+    }
   }
 
   /**
