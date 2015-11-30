@@ -34,4 +34,6 @@ dependencies {
 
   /* Example of a local subproject dependency */
   /* compile project(':sibling_gradle_project') */
+
+   compile 'org.ros.rosjava_messages:actionlib_tutorials:[0.1,)'
 }
