@@ -7,8 +7,12 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Subscriber;
 import org.ros.node.topic.Publisher;
 import org.ros.message.MessageListener;
+import org.ros.message.Message;
 
 public class ActionClient extends AbstractNodeMain {
+
+  private string actionName = "fibonacci";
+
   //actionlib_tutorials.FibonacciActionGoal actionGoal;
   Publisher<actionlib_tutorials.FibonacciActionGoal> clientGoal;
   //Publisher<actionlib_msgs.cancel> clientCancel;
@@ -16,15 +20,19 @@ public class ActionClient extends AbstractNodeMain {
   Subscriber<actionlib_tutorials.FibonacciActionResult> serverResult;
   //Suscriber<actionlib_tutorials.FibonacciActionFeedback> serverFeedback;
 
+  void ActionClient(string actionName) {
+    this.actionName = actionName;
+  }
+  
   private void publishClient(ConnectedNode node) {
-    clientGoal = node.newPublisher("fibonacci/goal",
+    clientGoal = node.newPublisher(actionName + "/goal",
       actionlib_tutorials.FibonacciActionGoal._TYPE);
     //clientCancel = connectedNode.newPublisher("fibonacci/cancel",
     //  actionlib_msgs.cancel._TYPE);
   }
 
-  private void suscribeServer(ConnectedNode node) {
-    serverResult = node.newSubscriber("fibonacci/result",
+  private void suscribeToServer(ConnectedNode node) {
+    serverResult = node.newSubscriber(actionName + "/result",
       actionlib_tutorials.FibonacciActionResult._TYPE);
 
     serverResult.addMessageListener(new MessageListener<actionlib_tutorials.FibonacciActionResult>() {
@@ -64,27 +72,27 @@ public class ActionClient extends AbstractNodeMain {
       return GraphName.of("fibonacci_client");
     }
 
-    @Override
-    public void onStart(ConnectedNode node) {
-      connect(node);
+  @Override
+  public void onStart(ConnectedNode node) {
+    connect(node);
 
-      suscribeServer(node);
+    suscribeServer(node);
 
-      // publish a goal message
-      actionlib_tutorials.FibonacciActionGoal goalMessage = clientGoal.newMessage();
-      actionlib_tutorials.FibonacciGoal fibonacciGoal = goalMessage.getGoal();
-      // set Fibonacci parameter
-      fibonacciGoal.setOrder(6);
-      goalMessage.setGoal(fibonacciGoal);
+    // publish a goal message
+    actionlib_tutorials.FibonacciActionGoal goalMessage = clientGoal.newMessage();
+    actionlib_tutorials.FibonacciGoal fibonacciGoal = goalMessage.getGoal();
+    // set Fibonacci parameter
+    fibonacciGoal.setOrder(6);
+    goalMessage.setGoal(fibonacciGoal);
 
-      while (true) {
-        clientGoal.publish(goalMessage);
-        try {
-          Thread.sleep(10000);
-        }
-        catch (InterruptedException ex) {
-          ;
-        }
+    while (true) {
+      clientGoal.publish(goalMessage);
+      try {
+        Thread.sleep(10000);
+      }
+      catch (InterruptedException ex) {
+        ;
       }
     }
+  }
 }
