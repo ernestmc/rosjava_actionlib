@@ -8,6 +8,7 @@ import org.ros.node.topic.Subscriber;
 import org.ros.node.topic.Publisher;
 import org.ros.message.MessageListener;
 import org.ros.internal.message.Message;
+import java.util.concurrent.TimeUnit;
 
 public class ActionClient<T_ACTION_GOAL extends Message,
   T_ACTION_FEEDBACK extends Message,
@@ -17,12 +18,12 @@ public class ActionClient<T_ACTION_GOAL extends Message,
   String actionGoalType;
   String actionResultType;
   String actionFeedbackType;
-  Publisher<T_ACTION_GOAL> goalPublisher;
+  Publisher<T_ACTION_GOAL> goalPublisher = null;
   //Publisher<actionlib_msgs.cancel> clientCancel;
   //Suscriber<actionlib_msgs.status> serverStatus;
-  Subscriber<T_ACTION_RESULT> serverResult;
-  Subscriber<T_ACTION_FEEDBACK> serverFeedback;
-  ConnectedNode node;
+  Subscriber<T_ACTION_RESULT> serverResult = null;
+  Subscriber<T_ACTION_FEEDBACK> serverFeedback = null;
+  ConnectedNode node = null;
   String actionName;
   ActionClientListener callbackTarget = null;
 
@@ -49,6 +50,12 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     goalPublisher = node.newPublisher(actionName + "/goal", actionGoalType);
     //clientCancel = connectedNode.newPublisher("fibonacci/cancel",
     //  actionlib_msgs.cancel._TYPE);
+  }
+
+  private void unpublishClient() {
+    if (goalPublisher != null) {
+      goalPublisher.shutdown(5, TimeUnit.SECONDS);
+    }
   }
 
   public T_ACTION_GOAL newGoalMessage() {
@@ -86,6 +93,15 @@ public class ActionClient<T_ACTION_GOAL extends Message,
       actionlib_tutorials.FibonacciActionFeedback._TYPE);*/
   }
 
+  private void unsubscribeToServer() {
+    if (serverFeedback != null) {
+      serverFeedback.shutdown(5, TimeUnit.SECONDS);
+    }
+    if (serverResult != null) {
+      serverResult.shutdown(5, TimeUnit.SECONDS);
+    }
+  }
+
   public void gotResult(T_ACTION_RESULT message) {
     // Propagate the callback
     if (callbackTarget != null) {
@@ -108,4 +124,12 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     subscribeToServer(node);
   }
 
+  /**
+   * Finish the action client. Unregister publishers and listeners.
+   */
+  public void finish() {
+    callbackTarget = null;
+    unpublishClient();
+    unsubscribeToServer();
+  }
 }
