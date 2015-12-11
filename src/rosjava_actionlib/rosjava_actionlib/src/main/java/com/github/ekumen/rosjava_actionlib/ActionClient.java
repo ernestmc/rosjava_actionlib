@@ -9,31 +9,44 @@ import org.ros.node.topic.Publisher;
 import org.ros.message.MessageListener;
 import org.ros.internal.message.Message;
 
-public class ActionClient<T_ACTION_GOAL extends Message> {
+public class ActionClient<T_ACTION_GOAL extends Message,
+  T_ACTION_FEEDBACK extends Message,
+  T_ACTION_RESULT extends Message> {
+
   T_ACTION_GOAL actionGoal;
   String actionGoalType;
+  String actionResultType;
+  String actionFeedbackType;
   Publisher<T_ACTION_GOAL> goalPublisher;
   //Publisher<actionlib_msgs.cancel> clientCancel;
   //Suscriber<actionlib_msgs.status> serverStatus;
-  Subscriber<actionlib_tutorials.FibonacciActionResult> serverResult;
-  //Suscriber<actionlib_tutorials.FibonacciActionFeedback> serverFeedback;
+  Subscriber<T_ACTION_RESULT> serverResult;
+  Subscriber<T_ACTION_FEEDBACK> serverFeedback;
   ConnectedNode node;
   String actionName;
+  ActionClientListener callbackTarget = null;
 
-  ActionClient (ConnectedNode node, String actionName, String actionGoalType) {
+  ActionClient (ConnectedNode node, String actionName, String actionGoalType,
+    String actionFeedbackType, String actionResultType) {
     this.node = node;
     this.actionName = actionName;
     this.actionGoalType = actionGoalType;
-    publishClient(node);
+    this.actionFeedbackType = actionFeedbackType;
+    this.actionResultType = actionResultType;
+
+    connect(node);
   }
 
-  void sendGoal(T_ACTION_GOAL goal) {
+  public void attachListener(ActionClientListener target) {
+    callbackTarget = target;
+  }
+
+  public void sendGoal(T_ACTION_GOAL goal) {
     goalPublisher.publish(goal);
   }
 
   private void publishClient(ConnectedNode node) {
-    goalPublisher = node.newPublisher(actionName + "/goal",
-      actionGoalType);
+    goalPublisher = node.newPublisher(actionName + "/goal", actionGoalType);
     //clientCancel = connectedNode.newPublisher("fibonacci/cancel",
     //  actionlib_msgs.cancel._TYPE);
   }
@@ -42,13 +55,27 @@ public class ActionClient<T_ACTION_GOAL extends Message> {
     return goalPublisher.newMessage();
   }
 
-  private void suscribeServer(ConnectedNode node) {
-    serverResult = node.newSubscriber("fibonacci/result",
-      actionlib_tutorials.FibonacciActionResult._TYPE);
+  private void subscribeToServer(ConnectedNode node) {
+    serverResult = node.newSubscriber(actionName + "/result", actionResultType);
+    serverFeedback = node.newSubscriber(actionName + "/feedback", actionFeedbackType);
 
-    serverResult.addMessageListener(new MessageListener<actionlib_tutorials.FibonacciActionResult>() {
+    serverFeedback.addMessageListener(new MessageListener<T_ACTION_FEEDBACK>() {
       @Override
-      public void onNewMessage(actionlib_tutorials.FibonacciActionResult message) {
+      public void onNewMessage(T_ACTION_FEEDBACK message) {
+        gotFeedback(message);
+      }
+    });
+
+    serverResult.addMessageListener(new MessageListener<T_ACTION_RESULT>() {
+      @Override
+      public void onNewMessage(T_ACTION_RESULT message) {
+        gotResult(message);
+      }
+    });
+
+    serverResult.addMessageListener(new MessageListener<T_ACTION_RESULT>() {
+      @Override
+      public void onNewMessage(T_ACTION_RESULT message) {
         gotResult(message);
       }
     });
@@ -59,23 +86,26 @@ public class ActionClient<T_ACTION_GOAL extends Message> {
       actionlib_tutorials.FibonacciActionFeedback._TYPE);*/
   }
 
-  public void gotResult(actionlib_tutorials.FibonacciActionResult message) {
-    actionlib_tutorials.FibonacciResult result = message.getResult();
-    int[] sequence = result.getSequence();
-    int i;
-
-    System.out.print("Got Fibonacci result sequence! ");
-    for (i=0; i<sequence.length; i++)
-      System.out.print(Integer.toString(sequence[i]) + " ");
-    System.out.print("\n");
+  public void gotResult(T_ACTION_RESULT message) {
+    // Propagate the callback
+    if (callbackTarget != null) {
+      callbackTarget.resultReceived(message);
+    }
   }
 
-/**
- * Publishes the client's topics and suscribes to the server's topics.
- */
-  public void connect(ConnectedNode node) {
+  public void gotFeedback(T_ACTION_FEEDBACK message) {
+    // Propagate the callback
+    if (callbackTarget != null) {
+      callbackTarget.feedbackReceived(message);
+    }
+  }
+
+  /**
+  * Publishes the client's topics and suscribes to the server's topics.
+  */
+  private void connect(ConnectedNode node) {
     publishClient(node);
-    //suscribeServer(node);
+    subscribeToServer(node);
   }
 
 }
