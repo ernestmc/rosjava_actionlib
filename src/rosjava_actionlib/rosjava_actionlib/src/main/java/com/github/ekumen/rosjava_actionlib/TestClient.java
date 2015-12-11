@@ -13,6 +13,7 @@ import actionlib_tutorials.FibonacciResult;
 
 public class TestClient extends AbstractNodeMain implements ActionClientListener<FibonacciActionFeedback, FibonacciActionResult> {
   ActionClient ac;
+  volatile private boolean responded = false;
 
   @Override
   public GraphName getDefaultNodeName() {
@@ -22,6 +23,7 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
   @Override
   public void onStart(ConnectedNode node) {
     ac = new ActionClient<FibonacciActionGoal, FibonacciActionFeedback, FibonacciActionResult>(node, "/fibonacci", FibonacciActionGoal._TYPE, FibonacciActionFeedback._TYPE, FibonacciActionResult._TYPE);
+    int repeat = 3;
 
     // Attach listener for the callbacks
     ac.attachListener(this);
@@ -34,15 +36,26 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
     fibonacciGoal.setOrder(6);
     goalMessage.setGoal(fibonacciGoal);
 
-    while (true) {
-      ac.sendGoal(goalMessage);
-      try {
-        Thread.sleep(10000);
-      }
-      catch (InterruptedException ex) {
-        ;
-      }
+    while(repeat > 0) {
+      sleep(1000);
+    System.out.println("Sending goal #" + repeat + "...");
+    ac.sendGoal(goalMessage);
+    System.out.println("Goal sent.");
+    repeat--;
     }
+
+    while (repeat > 0) {
+      responded = false;
+      ac.sendGoal(goalMessage);
+      while (!responded) {
+      }
+      repeat--;
+    }
+
+    System.out.println("Finishing node!!");
+    sleep(30000);
+    ac.finish();
+    node.shutdown();
   }
 
   @Override
@@ -51,7 +64,9 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
     int[] sequence = result.getSequence();
     int i;
 
-    System.out.print("Got Fibonacci result sequence!");
+    responded = true;
+
+    System.out.print("Got Fibonacci result sequence! ");
     for (i=0; i<sequence.length; i++)
       System.out.print(Integer.toString(sequence[i]) + " ");
     System.out.print("\n");
@@ -72,5 +87,13 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
   @Override
   public void statusReceived(Message status) {
 
+  }
+
+  private void sleep(long msec) {
+    try {
+      Thread.sleep(msec);
+    }
+    catch (InterruptedException ex) {
+    }
   }
 }
