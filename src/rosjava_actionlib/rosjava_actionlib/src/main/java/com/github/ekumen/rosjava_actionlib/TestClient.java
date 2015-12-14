@@ -10,9 +10,11 @@ import actionlib_tutorials.FibonacciActionResult;
 import actionlib_tutorials.FibonacciGoal;
 import actionlib_tutorials.FibonacciFeedback;
 import actionlib_tutorials.FibonacciResult;
+import actionlib_msgs.GoalStatusArray;
 
 public class TestClient extends AbstractNodeMain implements ActionClientListener<FibonacciActionFeedback, FibonacciActionResult> {
   ActionClient ac;
+  volatile private boolean resultReceived = false;
 
   @Override
   public GraphName getDefaultNodeName() {
@@ -22,6 +24,7 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
   @Override
   public void onStart(ConnectedNode node) {
     ac = new ActionClient<FibonacciActionGoal, FibonacciActionFeedback, FibonacciActionResult>(node, "/fibonacci", FibonacciActionGoal._TYPE, FibonacciActionFeedback._TYPE, FibonacciActionResult._TYPE);
+    int repeat = 3;
 
     // Attach listener for the callbacks
     ac.attachListener(this);
@@ -34,15 +37,17 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
     fibonacciGoal.setOrder(6);
     goalMessage.setGoal(fibonacciGoal);
 
-    while (true) {
+    while (repeat > 0) {
+      System.out.println("Sending goal #" + repeat + "...");
       ac.sendGoal(goalMessage);
-      try {
-        Thread.sleep(10000);
-      }
-      catch (InterruptedException ex) {
-        ;
-      }
+      System.out.println("Goal sent.");
+      sleep(10000);
+      //while(!resultReceived) sleep(100);
+      resultReceived = false;
+      repeat--;
     }
+
+    System.exit(0);
   }
 
   @Override
@@ -50,6 +55,8 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
     FibonacciResult result = message.getResult();
     int[] sequence = result.getSequence();
     int i;
+
+    resultReceived = true;
 
     System.out.print("Got Fibonacci result sequence!");
     for (i=0; i<sequence.length; i++)
@@ -70,7 +77,16 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
   }
 
   @Override
-  public void statusReceived(Message status) {
+  public void statusReceived(GoalStatusArray status) {
 
+  }
+
+  void sleep(long msec) {
+    try {
+      Thread.sleep(msec);
+    }
+    catch (InterruptedException ex) {
+      ;
+    }
   }
 }

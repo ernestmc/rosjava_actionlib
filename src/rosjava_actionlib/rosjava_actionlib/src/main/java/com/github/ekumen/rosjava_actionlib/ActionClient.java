@@ -9,6 +9,7 @@ import org.ros.node.topic.Publisher;
 import org.ros.message.MessageListener;
 import org.ros.internal.message.Message;
 import java.util.concurrent.TimeUnit;
+import actionlib_msgs.GoalStatusArray;
 
 public class ActionClient<T_ACTION_GOAL extends Message,
   T_ACTION_FEEDBACK extends Message,
@@ -23,6 +24,7 @@ public class ActionClient<T_ACTION_GOAL extends Message,
   //Suscriber<actionlib_msgs.status> serverStatus;
   Subscriber<T_ACTION_RESULT> serverResult = null;
   Subscriber<T_ACTION_FEEDBACK> serverFeedback = null;
+  Subscriber<GoalStatusArray> serverStatus = null;
   ConnectedNode node = null;
   String actionName;
   ActionClientListener callbackTarget = null;
@@ -65,6 +67,7 @@ public class ActionClient<T_ACTION_GOAL extends Message,
   private void subscribeToServer(ConnectedNode node) {
     serverResult = node.newSubscriber(actionName + "/result", actionResultType);
     serverFeedback = node.newSubscriber(actionName + "/feedback", actionFeedbackType);
+    serverStatus = node.newSubscriber(actionName + "/status", GoalStatusArray._TYPE);
 
     serverFeedback.addMessageListener(new MessageListener<T_ACTION_FEEDBACK>() {
       @Override
@@ -80,10 +83,10 @@ public class ActionClient<T_ACTION_GOAL extends Message,
       }
     });
 
-    serverResult.addMessageListener(new MessageListener<T_ACTION_RESULT>() {
+    serverStatus.addMessageListener(new MessageListener<GoalStatusArray>() {
       @Override
-      public void onNewMessage(T_ACTION_RESULT message) {
-        gotResult(message);
+      public void onNewMessage(GoalStatusArray message) {
+        gotStatus(message);
       }
     });
 
@@ -113,6 +116,13 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     // Propagate the callback
     if (callbackTarget != null) {
       callbackTarget.feedbackReceived(message);
+    }
+  }
+
+  public void gotStatus(GoalStatusArray message) {
+    // Propagate the callback
+    if (callbackTarget != null) {
+      callbackTarget.statusReceived(message);
     }
   }
 
