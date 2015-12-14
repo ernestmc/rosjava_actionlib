@@ -103,6 +103,9 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     if (serverResult != null) {
       serverResult.shutdown(5, TimeUnit.SECONDS);
     }
+    if (serverStatus != null) {
+      serverStatus.shutdown(5, TimeUnit.SECONDS);
+    }
   }
 
   public void gotResult(T_ACTION_RESULT message) {
@@ -141,5 +144,9 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     callbackTarget = null;
     unpublishClient();
     unsubscribeToServer();
+  }
+
+  protected void finalize() {
+    finish();
   }
 }
