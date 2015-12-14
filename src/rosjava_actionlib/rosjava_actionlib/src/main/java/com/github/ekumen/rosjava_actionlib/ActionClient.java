@@ -10,6 +10,7 @@ import org.ros.message.MessageListener;
 import org.ros.internal.message.Message;
 import java.util.concurrent.TimeUnit;
 import actionlib_msgs.GoalStatusArray;
+import actionlib_msgs.GoalID;
 
 public class ActionClient<T_ACTION_GOAL extends Message,
   T_ACTION_FEEDBACK extends Message,
@@ -20,8 +21,7 @@ public class ActionClient<T_ACTION_GOAL extends Message,
   String actionResultType;
   String actionFeedbackType;
   Publisher<T_ACTION_GOAL> goalPublisher = null;
-  //Publisher<actionlib_msgs.cancel> clientCancel;
-  //Suscriber<actionlib_msgs.status> serverStatus;
+  Publisher<GoalID> cancelPublisher = null;
   Subscriber<T_ACTION_RESULT> serverResult = null;
   Subscriber<T_ACTION_FEEDBACK> serverFeedback = null;
   Subscriber<GoalStatusArray> serverStatus = null;
@@ -48,15 +48,23 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     goalPublisher.publish(goal);
   }
 
+  public void sendCancel(GoalID id) {
+    cancelPublisher.publish(id);
+  }
+
   private void publishClient(ConnectedNode node) {
     goalPublisher = node.newPublisher(actionName + "/goal", actionGoalType);
-    //clientCancel = connectedNode.newPublisher("fibonacci/cancel",
-    //  actionlib_msgs.cancel._TYPE);
+    cancelPublisher = node.newPublisher(actionName + "/cancel", GoalID._TYPE);
   }
 
   private void unpublishClient() {
     if (goalPublisher != null) {
       goalPublisher.shutdown(5, TimeUnit.SECONDS);
+      goalPublisher = null;
+    }
+    if (cancelPublisher != null) {
+      cancelPublisher.shutdown(5, TimeUnit.SECONDS);
+      cancelPublisher = null;
     }
   }
 
@@ -89,22 +97,20 @@ public class ActionClient<T_ACTION_GOAL extends Message,
         gotStatus(message);
       }
     });
-
-    /*serverStatus = node.newSubscriber("fibonacci/status",
-      actionlib_msgs.status._TYPE);
-    serverFeedback = node.newSubscriber("fibonacci/feedback",
-      actionlib_tutorials.FibonacciActionFeedback._TYPE);*/
   }
 
   private void unsubscribeToServer() {
     if (serverFeedback != null) {
       serverFeedback.shutdown(5, TimeUnit.SECONDS);
+      serverFeedback = null;
     }
     if (serverResult != null) {
       serverResult.shutdown(5, TimeUnit.SECONDS);
+      serverResult = null;
     }
     if (serverStatus != null) {
       serverStatus.shutdown(5, TimeUnit.SECONDS);
+      serverStatus = null;
     }
   }
 

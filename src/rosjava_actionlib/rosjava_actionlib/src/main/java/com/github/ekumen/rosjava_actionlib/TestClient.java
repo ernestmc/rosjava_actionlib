@@ -38,10 +38,10 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
     goalMessage.setGoal(fibonacciGoal);
 
     while (repeat > 0) {
+      sleep(10000);
       System.out.println("Sending goal #" + repeat + "...");
       ac.sendGoal(goalMessage);
       System.out.println("Goal sent.");
-      sleep(10000);
       //while(!resultReceived) sleep(100);
       resultReceived = false;
       repeat--;
