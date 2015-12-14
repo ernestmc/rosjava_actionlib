@@ -46,10 +46,6 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     goalPublisher.publish(goal);
   }
 
-  void ActionClient(string actionName) {
-    this.actionName = actionName;
-  }
-  
   private void publishClient(ConnectedNode node) {
     goalPublisher = node.newPublisher(actionName + "/goal", actionGoalType);
     //clientCancel = connectedNode.newPublisher("fibonacci/cancel",
