@@ -7,37 +7,86 @@ import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Subscriber;
 import org.ros.node.topic.Publisher;
 import org.ros.message.MessageListener;
-import org.ros.message.Message;
+import org.ros.internal.message.Message;
+import java.util.concurrent.TimeUnit;
 
-public class ActionClient extends AbstractNodeMain {
+public class ActionClient<T_ACTION_GOAL extends Message,
+  T_ACTION_FEEDBACK extends Message,
+  T_ACTION_RESULT extends Message> {
 
-  private string actionName = "fibonacci";
-
-  //actionlib_tutorials.FibonacciActionGoal actionGoal;
-  Publisher<actionlib_tutorials.FibonacciActionGoal> clientGoal;
+  T_ACTION_GOAL actionGoal;
+  String actionGoalType;
+  String actionResultType;
+  String actionFeedbackType;
+  Publisher<T_ACTION_GOAL> goalPublisher = null;
   //Publisher<actionlib_msgs.cancel> clientCancel;
   //Suscriber<actionlib_msgs.status> serverStatus;
-  Subscriber<actionlib_tutorials.FibonacciActionResult> serverResult;
-  //Suscriber<actionlib_tutorials.FibonacciActionFeedback> serverFeedback;
+  Subscriber<T_ACTION_RESULT> serverResult = null;
+  Subscriber<T_ACTION_FEEDBACK> serverFeedback = null;
+  ConnectedNode node = null;
+  String actionName;
+  ActionClientListener callbackTarget = null;
+
+  ActionClient (ConnectedNode node, String actionName, String actionGoalType,
+    String actionFeedbackType, String actionResultType) {
+    this.node = node;
+    this.actionName = actionName;
+    this.actionGoalType = actionGoalType;
+    this.actionFeedbackType = actionFeedbackType;
+    this.actionResultType = actionResultType;
+
+    connect(node);
+  }
+
+  public void attachListener(ActionClientListener target) {
+    callbackTarget = target;
+  }
+
+  public void sendGoal(T_ACTION_GOAL goal) {
+    goalPublisher.publish(goal);
+  }
 
   void ActionClient(string actionName) {
     this.actionName = actionName;
   }
   
   private void publishClient(ConnectedNode node) {
-    clientGoal = node.newPublisher(actionName + "/goal",
-      actionlib_tutorials.FibonacciActionGoal._TYPE);
+    goalPublisher = node.newPublisher(actionName + "/goal", actionGoalType);
     //clientCancel = connectedNode.newPublisher("fibonacci/cancel",
     //  actionlib_msgs.cancel._TYPE);
   }
 
-  private void suscribeToServer(ConnectedNode node) {
-    serverResult = node.newSubscriber(actionName + "/result",
-      actionlib_tutorials.FibonacciActionResult._TYPE);
+  private void unpublishClient() {
+    if (goalPublisher != null) {
+      goalPublisher.shutdown(5, TimeUnit.SECONDS);
+    }
+  }
 
-    serverResult.addMessageListener(new MessageListener<actionlib_tutorials.FibonacciActionResult>() {
+  public T_ACTION_GOAL newGoalMessage() {
+    return goalPublisher.newMessage();
+  }
+
+  private void subscribeToServer(ConnectedNode node) {
+    serverResult = node.newSubscriber(actionName + "/result", actionResultType);
+    serverFeedback = node.newSubscriber(actionName + "/feedback", actionFeedbackType);
+
+    serverFeedback.addMessageListener(new MessageListener<T_ACTION_FEEDBACK>() {
       @Override
-      public void onNewMessage(actionlib_tutorials.FibonacciActionResult message) {
+      public void onNewMessage(T_ACTION_FEEDBACK message) {
+        gotFeedback(message);
+      }
+    });
+
+    serverResult.addMessageListener(new MessageListener<T_ACTION_RESULT>() {
+      @Override
+      public void onNewMessage(T_ACTION_RESULT message) {
+        gotResult(message);
+      }
+    });
+
+    serverResult.addMessageListener(new MessageListener<T_ACTION_RESULT>() {
+      @Override
+      public void onNewMessage(T_ACTION_RESULT message) {
         gotResult(message);
       }
     });
@@ -48,51 +97,43 @@ public class ActionClient extends AbstractNodeMain {
       actionlib_tutorials.FibonacciActionFeedback._TYPE);*/
   }
 
-  public void gotResult(actionlib_tutorials.FibonacciActionResult message) {
-    actionlib_tutorials.FibonacciResult result = message.getResult();
-    int[] sequence = result.getSequence();
-    int i;
-
-    System.out.print("Got Fibonacci result sequence! ");
-    for (i=0; i<sequence.length; i++)
-      System.out.print(Integer.toString(sequence[i]) + " ");
-    System.out.print("\n");
+  private void unsubscribeToServer() {
+    if (serverFeedback != null) {
+      serverFeedback.shutdown(5, TimeUnit.SECONDS);
+    }
+    if (serverResult != null) {
+      serverResult.shutdown(5, TimeUnit.SECONDS);
+    }
   }
 
-/**
- * Publishes the client's topics and suscribes to the server's topics.
- */
-  public void connect(ConnectedNode node) {
+  public void gotResult(T_ACTION_RESULT message) {
+    // Propagate the callback
+    if (callbackTarget != null) {
+      callbackTarget.resultReceived(message);
+    }
+  }
+
+  public void gotFeedback(T_ACTION_FEEDBACK message) {
+    // Propagate the callback
+    if (callbackTarget != null) {
+      callbackTarget.feedbackReceived(message);
+    }
+  }
+
+  /**
+  * Publishes the client's topics and suscribes to the server's topics.
+  */
+  private void connect(ConnectedNode node) {
     publishClient(node);
-    //suscribeServer(node);
+    subscribeToServer(node);
   }
 
-  @Override
-  public GraphName getDefaultNodeName() {
-      return GraphName.of("fibonacci_client");
-    }
-
-  @Override
-  public void onStart(ConnectedNode node) {
-    connect(node);
-
-    suscribeServer(node);
-
-    // publish a goal message
-    actionlib_tutorials.FibonacciActionGoal goalMessage = clientGoal.newMessage();
-    actionlib_tutorials.FibonacciGoal fibonacciGoal = goalMessage.getGoal();
-    // set Fibonacci parameter
-    fibonacciGoal.setOrder(6);
-    goalMessage.setGoal(fibonacciGoal);
-
-    while (true) {
-      clientGoal.publish(goalMessage);
-      try {
-        Thread.sleep(10000);
-      }
-      catch (InterruptedException ex) {
-        ;
-      }
-    }
+  /**
+   * Finish the action client. Unregister publishers and listeners.
+   */
+  public void finish() {
+    callbackTarget = null;
+    unpublishClient();
+    unsubscribeToServer();
   }
 }
