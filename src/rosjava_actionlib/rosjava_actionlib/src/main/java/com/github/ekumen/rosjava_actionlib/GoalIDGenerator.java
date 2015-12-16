@@ -19,8 +19,6 @@ package com.github.ekumen.rosjava_actionlib;
 import org.ros.message.Time;
 import actionlib_msgs.GoalID;
 import org.ros.node.ConnectedNode;
-import org.ros.node.NodeConfiguration;
-import org.ros.message.MessageFactory;
 
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -62,7 +60,7 @@ public class GoalIDGenerator {
    *
    * @return GoalID object
    */
-  public String generateID(ConnectedNode node, GoalID goal) {
+  public String generateID(GoalID goalId) {
     String id;
     Time t = node.getCurrentTime();
     //NodeConfiguration nc = NodeConfiguration.newPrivate();
@@ -74,8 +72,8 @@ public class GoalIDGenerator {
     id = node.getName().toString() + "-" + goalCount.incrementAndGet()
       + "-" + t.secs + "." + t.nsecs;
 
-    goal.setId(id);
-    goal.setStamp(t);
+    goalId.setId(id);
+    goalId.setStamp(t);
 
     return id;
   }

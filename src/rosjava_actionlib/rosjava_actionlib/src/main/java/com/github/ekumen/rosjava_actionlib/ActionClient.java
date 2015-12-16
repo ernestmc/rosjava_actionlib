@@ -54,6 +54,7 @@ public class ActionClient<T_ACTION_GOAL extends Message,
 
   private void publishClient(ConnectedNode node) {
     goalPublisher = node.newPublisher(actionName + "/goal", actionGoalType);
+    goalPublisher.setLatchMode(false);
     cancelPublisher = node.newPublisher(actionName + "/cancel", GoalID._TYPE);
   }
 

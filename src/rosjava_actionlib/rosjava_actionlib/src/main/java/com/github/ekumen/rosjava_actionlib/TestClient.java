@@ -1,5 +1,6 @@
 package com.github.ekumen.rosjava_actionlib;
 
+import java.util.List;
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
@@ -11,10 +12,13 @@ import actionlib_tutorials.FibonacciGoal;
 import actionlib_tutorials.FibonacciFeedback;
 import actionlib_tutorials.FibonacciResult;
 import actionlib_msgs.GoalStatusArray;
+import actionlib_msgs.GoalID;
+import actionlib_msgs.GoalStatus;
 
 public class TestClient extends AbstractNodeMain implements ActionClientListener<FibonacciActionFeedback, FibonacciActionResult> {
-  ActionClient ac;
-  volatile private boolean resultReceived = false;
+  private ActionClient ac = null;
+  private volatile boolean resultReceived = false;
+  private GoalIDGenerator goalIdGenerator = null;
 
   @Override
   public GraphName getDefaultNodeName() {
@@ -25,6 +29,8 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
   public void onStart(ConnectedNode node) {
     ac = new ActionClient<FibonacciActionGoal, FibonacciActionFeedback, FibonacciActionResult>(node, "/fibonacci", FibonacciActionGoal._TYPE, FibonacciActionFeedback._TYPE, FibonacciActionResult._TYPE);
     int repeat = 3;
+
+    goalIdGenerator = new GoalIDGenerator(node);
 
     // Attach listener for the callbacks
     ac.attachListener(this);
@@ -40,7 +46,7 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
     while (repeat > 0) {
       sleep(10000);
       System.out.println("Sending goal #" + repeat + "...");
-      ac.sendGoal(goalMessage);
+      sendGoal(goalMessage);
       System.out.println("Goal sent.");
       //while(!resultReceived) sleep(100);
       resultReceived = false;
@@ -78,7 +84,15 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
 
   @Override
   public void statusReceived(GoalStatusArray status) {
+    List<GoalStatus> statusList = status.getStatusList();
+    for(GoalStatus gs:statusList) {
+      //System.out.println("GoalID: " + gs.getGoalId().getId() + " -- GoalStatus: " + gs.getStatus() + " -- " + gs.getText());
+    }
+  }
 
+  private void sendGoal(FibonacciActionGoal goal) {
+    goalIdGenerator.generateID(goal.getGoalId());
+    ac.sendGoal(goal);
   }
 
   void sleep(long msec) {
