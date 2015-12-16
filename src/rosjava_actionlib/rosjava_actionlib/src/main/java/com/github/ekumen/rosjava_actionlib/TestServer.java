@@ -28,11 +28,14 @@ public class TestServer extends AbstractNodeMain implements ActionServerListener
     as = new ActionServer<FibonacciActionGoal, FibonacciActionFeedback,
       FibonacciActionResult>(node, "/fibonacci", FibonacciActionGoal._TYPE,
       FibonacciActionFeedback._TYPE, FibonacciActionResult._TYPE);
+
+    as.attachListener(this);
   }
 
   @Override
   public void goalReceived(FibonacciActionGoal goal) {
     System.out.println("Goal received.");
+    as.sendResult(as.newResultMessage());
   }
 
   @Override
