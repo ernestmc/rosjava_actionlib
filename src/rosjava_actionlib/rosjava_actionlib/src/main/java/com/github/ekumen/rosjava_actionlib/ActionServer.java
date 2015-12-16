@@ -1,4 +1,4 @@
-package com.github.ekumen.rosjava_actionlib;
+  package com.github.ekumen.rosjava_actionlib;
 
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
@@ -8,6 +8,8 @@ import org.ros.node.topic.Publisher;
 import org.ros.message.MessageListener;
 import org.ros.internal.message.Message;
 import java.util.concurrent.TimeUnit;
+import java.util.Timer;
+import java.util.TimerTask;
 import actionlib_msgs.GoalStatusArray;
 import actionlib_msgs.GoalID;
 
@@ -15,19 +17,20 @@ public class ActionServer<T_ACTION_GOAL extends Message,
   T_ACTION_FEEDBACK extends Message,
   T_ACTION_RESULT extends Message> {
 
-  T_ACTION_GOAL actionGoal;
-  String actionGoalType;
-  String actionResultType;
-  String actionFeedbackType;
-  Subscriber<T_ACTION_GOAL> goalSuscriber = null;
-  Subscriber<GoalID> cancelSuscriber = null;
+  private T_ACTION_GOAL actionGoal;
+  private String actionGoalType;
+  private String actionResultType;
+  private String actionFeedbackType;
+  private Subscriber<T_ACTION_GOAL> goalSuscriber = null;
+  private Subscriber<GoalID> cancelSuscriber = null;
 
-  Publisher<T_ACTION_RESULT> resultPublisher = null;
-  Publisher<T_ACTION_FEEDBACK> feedbackPublisher = null;
-  Publisher<GoalStatusArray> statusPublisher = null;
-  ConnectedNode node = null;
-  String actionName;
-  ActionServerListener callbackTarget = null;
+  private Publisher<T_ACTION_RESULT> resultPublisher = null;
+  private Publisher<T_ACTION_FEEDBACK> feedbackPublisher = null;
+  private Publisher<GoalStatusArray> statusPublisher = null;
+  private ConnectedNode node = null;
+  private String actionName;
+  private ActionServerListener callbackTarget = null;
+  private Timer statusTick = new Timer();
 
   ActionServer (ConnectedNode node, String actionName, String actionGoalType,
     String actionFeedbackType, String actionResultType) {
@@ -60,6 +63,12 @@ public class ActionServer<T_ACTION_GOAL extends Message,
     statusPublisher = node.newPublisher(actionName + "/status", GoalStatusArray._TYPE);
     feedbackPublisher = node.newPublisher(actionName + "/feedback", actionFeedbackType);
     resultPublisher = node.newPublisher(actionName + "/result", actionResultType);
+    statusTick.scheduleAtFixedRate(new TimerTask() {
+      @Override
+      public void run() {
+        sendStatusTick();
+      }
+    }, 2000, 1000);
   }
 
   private void unpublishServer() {
@@ -76,10 +85,6 @@ public class ActionServer<T_ACTION_GOAL extends Message,
       resultPublisher = null;
     }
   }
-
-  /*public T_ACTION_GOAL newGoalMessage() {
-    return goalPublisher.newMessage();
-  }*/
 
   private void subscribeToClient(ConnectedNode node) {
     goalSuscriber = node.newSubscriber(actionName + "/goal", actionGoalType);
@@ -123,6 +128,19 @@ public class ActionServer<T_ACTION_GOAL extends Message,
     if (callbackTarget != null) {
       callbackTarget.cancelReceived(message);
     }
+  }
+
+  public void sendStatusTick() {
+    GoalStatusArray status = statusPublisher.newMessage();
+    sendStatus(status);
+  }
+
+  public T_ACTION_RESULT newResultMessage() {
+    return resultPublisher.newMessage();
+  }
+
+  public T_ACTION_FEEDBACK newFeedbackMessage() {
+    return feedbackPublisher.newMessage();
   }
 
   /**
