@@ -9,9 +9,14 @@ import org.ros.node.topic.Publisher;
 import org.ros.message.MessageListener;
 import org.ros.internal.message.Message;
 import java.util.concurrent.TimeUnit;
+import java.lang.reflect.Method;
 import actionlib_msgs.GoalStatusArray;
 import actionlib_msgs.GoalID;
 
+/**
+ * Client implementation for actionlib.
+ * @author Ernesto Corbellini <ecorbellini@ekumenlabs.com>
+ */
 public class ActionClient<T_ACTION_GOAL extends Message,
   T_ACTION_FEEDBACK extends Message,
   T_ACTION_RESULT extends Message> {
@@ -28,6 +33,7 @@ public class ActionClient<T_ACTION_GOAL extends Message,
   ConnectedNode node = null;
   String actionName;
   ActionClientListener callbackTarget = null;
+  GoalIDGenerator goalIdGenerator = null;
 
   ActionClient (ConnectedNode node, String actionName, String actionGoalType,
     String actionFeedbackType, String actionResultType) {
@@ -36,7 +42,7 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     this.actionGoalType = actionGoalType;
     this.actionFeedbackType = actionFeedbackType;
     this.actionResultType = actionResultType;
-
+    goalIdGenerator = new GoalIDGenerator(node);
     connect(node);
   }
 
@@ -44,8 +50,42 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     callbackTarget = target;
   }
 
-  public void sendGoal(T_ACTION_GOAL goal) {
+  public void sendGoal(T_ACTION_GOAL goal, String id) {
+    GoalID gid = getGoalId(goal);
+    if (id == "") {
+      goalIdGenerator.generateID(gid);
+    } else {
+      gid.setId(id);
+    }
     goalPublisher.publish(goal);
+  }
+
+  public void sendGoal(T_ACTION_GOAL goal) {
+    sendGoal(goal, "");
+  }
+
+  public GoalID getGoalId(T_ACTION_GOAL goal) {
+    GoalID gid = null;
+    try {
+      Method m = goal.getClass().getMethod("getGoalId");
+      m.setAccessible(true); // workaround for known bug http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6924232
+      gid = (GoalID)m.invoke(goal);
+    }
+    catch (Exception e) {
+      e.printStackTrace(System.out);
+    }
+    return gid;
+  }
+
+  public void setGoalId(T_ACTION_GOAL goal, GoalID gid) {
+    try {
+      Method m = goal.getClass().getMethod("setGoalId", GoalID.class);
+      m.setAccessible(true); // workaround for known bug http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6924232
+      m.invoke(goal, gid);
+    }
+    catch (Exception e) {
+      e.printStackTrace(System.out);
+    }
   }
 
   public void sendCancel(GoalID id) {

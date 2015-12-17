@@ -18,7 +18,6 @@ import actionlib_msgs.GoalStatus;
 public class TestClient extends AbstractNodeMain implements ActionClientListener<FibonacciActionFeedback, FibonacciActionResult> {
   private ActionClient ac = null;
   private volatile boolean resultReceived = false;
-  private GoalIDGenerator goalIdGenerator = null;
 
   @Override
   public GraphName getDefaultNodeName() {
@@ -30,23 +29,20 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
     ac = new ActionClient<FibonacciActionGoal, FibonacciActionFeedback, FibonacciActionResult>(node, "/fibonacci", FibonacciActionGoal._TYPE, FibonacciActionFeedback._TYPE, FibonacciActionResult._TYPE);
     int repeat = 3;
 
-    goalIdGenerator = new GoalIDGenerator(node);
-
     // Attach listener for the callbacks
     ac.attachListener(this);
 
-    // publish a goal message
+    // Create Fibonacci goal message
     FibonacciActionGoal goalMessage = (FibonacciActionGoal)ac.newGoalMessage();
     FibonacciGoal fibonacciGoal = goalMessage.getGoal();
 
     // set Fibonacci parameter
     fibonacciGoal.setOrder(6);
-    goalMessage.setGoal(fibonacciGoal);
 
     while (repeat > 0) {
       sleep(10000);
       System.out.println("Sending goal #" + repeat + "...");
-      sendGoal(goalMessage);
+      ac.sendGoal(goalMessage);
       System.out.println("Goal sent.");
       //while(!resultReceived) sleep(100);
       resultReceived = false;
@@ -90,17 +86,11 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
     }
   }
 
-  private void sendGoal(FibonacciActionGoal goal) {
-    goalIdGenerator.generateID(goal.getGoalId());
-    ac.sendGoal(goal);
-  }
-
   void sleep(long msec) {
     try {
       Thread.sleep(msec);
     }
     catch (InterruptedException ex) {
-      ;
     }
   }
 }
