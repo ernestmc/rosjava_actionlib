@@ -11,9 +11,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.HashMap;
+import java.util.Vector;
 import java.lang.reflect.Method;
 import actionlib_msgs.GoalStatusArray;
 import actionlib_msgs.GoalID;
+import actionlib_msgs.GoalStatus;
 
 public class ActionServer<T_ACTION_GOAL extends Message,
   T_ACTION_FEEDBACK extends Message,
@@ -99,6 +101,10 @@ public class ActionServer<T_ACTION_GOAL extends Message,
     }
   }
 
+  /**
+   * Subscribe to the action client's topics: goal and cancel.
+   * @param node The ROS node connected to the master.
+   */
   private void subscribeToClient(ConnectedNode node) {
     goalSuscriber = node.newSubscriber(actionName + "/goal", actionGoalType);
     cancelSuscriber = node.newSubscriber(actionName + "/cancel", GoalID._TYPE);
@@ -118,6 +124,9 @@ public class ActionServer<T_ACTION_GOAL extends Message,
     });
   }
 
+  /**
+   * Unsubscribe from the client's topics.
+   */
   private void unsubscribeToClient() {
     if (goalSuscriber != null) {
       goalSuscriber.shutdown(5, TimeUnit.SECONDS);
@@ -129,14 +138,44 @@ public class ActionServer<T_ACTION_GOAL extends Message,
     }
   }
 
+  /**
+   * Called when we get a message on the subscribed goal topic.
+   */
   public void gotGoal(T_ACTION_GOAL goal) {
-    goalTracker.put(getGoalId(goal).getId(), new ServerGoal(goal));
+    boolean accepted =  false;
+    String goalIdString = getGoalId(goal).getId();
+
+    // start tracking this newly received goal
+    goalTracker.put(goalIdString, new ServerGoal(goal));
     // Propagate the callback
     if (callbackTarget != null) {
+      // inform the user of a received message
       callbackTarget.goalReceived(goal);
+      // ask the user to accept the goal
+      accepted = callbackTarget.acceptGoal(goal);
+      if (accepted) {
+        // the user accepted the goal
+        try {
+          goalTracker.get(goalIdString).state.transition(ServerStateMachine.Events.ACCEPT);
+        }
+        catch (Exception e) {
+          e.printStackTrace(System.out);
+        }
+      } else {
+        // the user rejected the goal
+        try {
+          goalTracker.get(goalIdString).state.transition(ServerStateMachine.Events.REJECT);
+        }
+        catch (Exception e) {
+          e.printStackTrace(System.out);
+        }
+      }
     }
   }
 
+  /**
+   * Called when we get a message on the subscribed cancel topic.
+   */
   public void gotCancel(GoalID gid) {
     // Propagate the callback
     if (callbackTarget != null) {
@@ -144,8 +183,22 @@ public class ActionServer<T_ACTION_GOAL extends Message,
     }
   }
 
+  /**
+   * Publishes the current status on the server's status topic.
+   * This is used like a heartbeat to update the status of every tracked goal.
+   */
   public void sendStatusTick() {
     GoalStatusArray status = statusPublisher.newMessage();
+    GoalStatus goalStatus;
+    Vector<GoalStatus> goalStatusList = new Vector<GoalStatus>();
+
+    for (ServerGoal sg : goalTracker.values()) {
+      goalStatus = node.getTopicMessageFactory().newFromType(GoalStatus._TYPE);
+      goalStatus.setGoalId(getGoalId(sg.goal));
+      goalStatus.setStatus((byte)sg.state.getState());
+      goalStatusList.add(goalStatus);
+    }
+    status.setStatusList(goalStatusList);
     sendStatus(status);
   }
 
@@ -157,6 +210,11 @@ public class ActionServer<T_ACTION_GOAL extends Message,
     return feedbackPublisher.newMessage();
   }
 
+  /**
+   * Returns the goal ID object related to a given action goal.
+   * @param goal An action goal message.
+   * @return The goal ID object.
+   */
   public GoalID getGoalId(T_ACTION_GOAL goal) {
     GoalID gid = null;
     try {
@@ -168,6 +226,34 @@ public class ActionServer<T_ACTION_GOAL extends Message,
       e.printStackTrace(System.out);
     }
     return gid;
+  }
+
+  /**
+   * Get the current state of the referenced goal.
+   * @param goalId String representing the ID of the goal.
+   * @return The current state of the goal or -100 if the goal ID is not tracked.
+   * @see actionlib_msgs.GoalStatus
+   */
+  public int getGoalState(String goalId) {
+    int ret = 0;
+
+    if (goalTracker.containsKey(goalId)) {
+      ret = goalTracker.get(goalId).state.getState();
+    } else {
+      ret = -100;
+    }
+    return ret;
+  }
+
+  /**
+   * Express a succeed event for this goal. The state of the goal will be updated.
+   */
+  public void setSucceed(String goalIdString) {
+    try {
+      goalTracker.get(goalIdString).state.transition(ServerStateMachine.Events.SUCCEED);
+    }
+    catch (Exception e) {
+    }
   }
 
   /**
