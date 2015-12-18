@@ -1,4 +1,4 @@
-  package com.github.ekumen.rosjava_actionlib;
+package com.github.ekumen.rosjava_actionlib;
 
 import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
@@ -10,12 +10,23 @@ import org.ros.internal.message.Message;
 import java.util.concurrent.TimeUnit;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.HashMap;
+import java.lang.reflect.Method;
 import actionlib_msgs.GoalStatusArray;
 import actionlib_msgs.GoalID;
 
 public class ActionServer<T_ACTION_GOAL extends Message,
   T_ACTION_FEEDBACK extends Message,
   T_ACTION_RESULT extends Message> {
+
+  private class ServerGoal {
+    T_ACTION_GOAL goal;
+    ServerStateMachine state = new ServerStateMachine();
+
+    ServerGoal(T_ACTION_GOAL g) {
+      goal = g;
+    }
+  }
 
   private T_ACTION_GOAL actionGoal;
   private String actionGoalType;
@@ -31,6 +42,8 @@ public class ActionServer<T_ACTION_GOAL extends Message,
   private String actionName;
   private ActionServerListener callbackTarget = null;
   private Timer statusTick = new Timer();
+  private HashMap<String, ServerGoal> goalTracker = new  HashMap<String,
+    ServerGoal>(1);
 
   ActionServer (ConnectedNode node, String actionName, String actionGoalType,
     String actionFeedbackType, String actionResultType) {
@@ -116,17 +129,18 @@ public class ActionServer<T_ACTION_GOAL extends Message,
     }
   }
 
-  public void gotGoal(T_ACTION_GOAL message) {
+  public void gotGoal(T_ACTION_GOAL goal) {
+    goalTracker.put(getGoalId(goal).getId(), new ServerGoal(goal));
     // Propagate the callback
     if (callbackTarget != null) {
-      callbackTarget.goalReceived(message);
+      callbackTarget.goalReceived(goal);
     }
   }
 
-  public void gotCancel(GoalID message) {
+  public void gotCancel(GoalID gid) {
     // Propagate the callback
     if (callbackTarget != null) {
-      callbackTarget.cancelReceived(message);
+      callbackTarget.cancelReceived(gid);
     }
   }
 
@@ -141,6 +155,19 @@ public class ActionServer<T_ACTION_GOAL extends Message,
 
   public T_ACTION_FEEDBACK newFeedbackMessage() {
     return feedbackPublisher.newMessage();
+  }
+
+  public GoalID getGoalId(T_ACTION_GOAL goal) {
+    GoalID gid = null;
+    try {
+      Method m = goal.getClass().getMethod("getGoalId");
+      m.setAccessible(true); // workaround for known bug http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6924232
+      gid = (GoalID)m.invoke(goal);
+    }
+    catch (Exception e) {
+      e.printStackTrace(System.out);
+    }
+    return gid;
   }
 
   /**
