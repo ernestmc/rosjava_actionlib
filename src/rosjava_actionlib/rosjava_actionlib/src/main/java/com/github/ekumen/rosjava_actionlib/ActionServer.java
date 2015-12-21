@@ -315,6 +315,21 @@ public class ActionServer<T_ACTION_GOAL extends Message,
   }
 
   /**
+   * Set goal ID and state information to the goal status message.
+   * @param gstat GoalStatus message.
+   * @param gidString String identifying the goal.
+   * @see actionlib_msgs.GoalStatus
+   */
+  public void setGoalStatus(GoalStatus gstat, String gidString) {
+    try {
+      ServerGoal serverGoal = goalTracker.get(gidString);
+      gstat.setGoalId(getGoalId(serverGoal.goal));
+      gstat.setStatus((byte)serverGoal.state.getState());
+    }
+    catch (Exception e) {
+    }
+  }
+  /**
   * Publishes the server's topics and suscribes to the client's topics.
   */
   private void connect(ConnectedNode node) {
