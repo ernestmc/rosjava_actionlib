@@ -27,6 +27,7 @@ public class TestServer extends AbstractNodeMain implements ActionServerListener
   @Override
   public void onStart(ConnectedNode node) {
     FibonacciActionResult result;
+    String id;
 
     as = new ActionServer<FibonacciActionGoal, FibonacciActionFeedback,
       FibonacciActionResult>(node, "/fibonacci", FibonacciActionGoal._TYPE,
@@ -38,7 +39,10 @@ public class TestServer extends AbstractNodeMain implements ActionServerListener
       if (currentGoal != null) {
         result = as.newResultMessage();
         result.getResult().setSequence(fibonacciSequence(currentGoal.getGoal().getOrder()));
-        as.setSucceed(currentGoal.getGoalId().getId());
+        id = currentGoal.getGoalId().getId();
+        as.setSucceed(id);
+        as.setGoalStatus(result.getStatus(), id);
+        System.out.println("Sending result...");
         as.sendResult(result);
         currentGoal = null;
       }
@@ -48,9 +52,6 @@ public class TestServer extends AbstractNodeMain implements ActionServerListener
   @Override
   public void goalReceived(FibonacciActionGoal goal) {
     System.out.println("Goal received.");
-    sleep(2000);
-    System.out.println("Sending result...");
-    sleep(2000);as.sendResult(as.newResultMessage());
   }
 
   @Override
