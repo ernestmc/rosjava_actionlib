@@ -1,4 +1,3 @@
-
 package com.github.ekumen.rosjava_actionlib;
 
 import org.ros.namespace.GraphName;
@@ -15,6 +14,7 @@ import actionlib_msgs.GoalID;
 
 /**
  * Client implementation for actionlib.
+ * This class encapsulates the communication with an actionlib server.
  * @author Ernesto Corbellini <ecorbellini@ekumenlabs.com>
  */
 public class ActionClient<T_ACTION_GOAL extends Message,
@@ -35,6 +35,19 @@ public class ActionClient<T_ACTION_GOAL extends Message,
   ActionClientListener callbackTarget = null;
   GoalIDGenerator goalIdGenerator = null;
 
+  /**
+   * Constructor for an ActionClient object.
+   * @param node The node object that is connected to the ROS master.
+   * @param actionName A string representing the name of this action. This name
+   * is used to publish the actinlib topics and should be agreed between server
+   * and the client.
+   * @param actionGoalType A string with the type information for the action
+   * goal message.
+   * @param actionFeedbackType A string with the type information for the
+   * feedback message.
+   * @param actionResultType A string with the type information for the result
+   * message.
+   */
   ActionClient (ConnectedNode node, String actionName, String actionGoalType,
     String actionFeedbackType, String actionResultType) {
     this.node = node;
@@ -50,6 +63,13 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     callbackTarget = target;
   }
 
+  /**
+    * Publish an action goal to the server. The type of the action goal message
+    * is dependent on the application.
+    * @param goal The action goal message.
+    * @param id A string containing the ID for the goal. The ID should represent
+    * this goal in a unique fashion in the server and the client.
+    */
   public void sendGoal(T_ACTION_GOAL goal, String id) {
     GoalID gid = getGoalId(goal);
     if (id == "") {
@@ -60,10 +80,21 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     goalPublisher.publish(goal);
   }
 
+  /**
+    * Publish an action goal to the server. The type of the action goal message
+    * is dependent on the application. A goal ID will be automatically generated.
+    * @param goal The action goal message.
+    */
   public void sendGoal(T_ACTION_GOAL goal) {
     sendGoal(goal, "");
   }
 
+  /**
+   * Convenience method for retrieving the goal ID of a given action goal message.
+   * @param goal The action goal message from where to obtain the goal ID.
+   * @return Goal ID object containing the ID of the action message.
+   * @see actionlib_msgs.GoalID
+   */
   public GoalID getGoalId(T_ACTION_GOAL goal) {
     GoalID gid = null;
     try {
@@ -77,6 +108,12 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     return gid;
   }
 
+  /**
+   * Convenience method for setting the goal ID of an action goal message.
+   * @param goal The action goal message to set the goal ID for.
+   * @param gid The goal ID object.
+   * @see actionlib_msgs.GoalID
+   */
   public void setGoalId(T_ACTION_GOAL goal, GoalID gid) {
     try {
       Method m = goal.getClass().getMethod("setGoalId", GoalID.class);
@@ -88,16 +125,29 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     }
   }
 
+  /**
+   * Publish a cancel message. This instructs the action server to cancel the
+   * specified goal.
+   * @param id The GoalID message identifying the goal to cancel.
+   * @see actionlib_msgs.GoalID
+   */
   public void sendCancel(GoalID id) {
     cancelPublisher.publish(id);
   }
 
+  /**
+   * Start publishing on the client topics: /goal and /cancel.
+   * @param node The node object that is connected to the ROS master.
+   */
   private void publishClient(ConnectedNode node) {
     goalPublisher = node.newPublisher(actionName + "/goal", actionGoalType);
     goalPublisher.setLatchMode(false);
     cancelPublisher = node.newPublisher(actionName + "/cancel", GoalID._TYPE);
   }
 
+  /**
+   * Stop publishing our client topics.
+   */
   private void unpublishClient() {
     if (goalPublisher != null) {
       goalPublisher.shutdown(5, TimeUnit.SECONDS);
@@ -113,6 +163,10 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     return goalPublisher.newMessage();
   }
 
+  /**
+   * Subscribe to the server topics.
+   * @param node The node object that is connected to the ROS master.
+   */
   private void subscribeToServer(ConnectedNode node) {
     serverResult = node.newSubscriber(actionName + "/result", actionResultType);
     serverFeedback = node.newSubscriber(actionName + "/feedback", actionFeedbackType);
@@ -140,6 +194,9 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     });
   }
 
+  /**
+   * Unsubscribe from the server topics.
+   */
   private void unsubscribeToServer() {
     if (serverFeedback != null) {
       serverFeedback.shutdown(5, TimeUnit.SECONDS);
@@ -155,6 +212,11 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     }
   }
 
+  /**
+   * Called whenever we get a message in the result topic.
+   * @param message The result message received. The type of this message
+   * depends on the application.
+   */
   public void gotResult(T_ACTION_RESULT message) {
     // Propagate the callback
     if (callbackTarget != null) {
@@ -162,6 +224,11 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     }
   }
 
+  /**
+   * Called whenever we get a message in the feedback topic.
+   * @param message The feedback message received. The type of this message
+   * depends on the application.
+   */
   public void gotFeedback(T_ACTION_FEEDBACK message) {
     // Propagate the callback
     if (callbackTarget != null) {
@@ -169,6 +236,11 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     }
   }
 
+  /**
+   * Called whenever we get a message in the status topic.
+   * @param message The GoalStatusArray message received.
+   * @see actionlib_msgs.GoalStatusArray
+   */
   public void gotStatus(GoalStatusArray message) {
     // Propagate the callback
     if (callbackTarget != null) {
@@ -178,6 +250,7 @@ public class ActionClient<T_ACTION_GOAL extends Message,
 
   /**
   * Publishes the client's topics and suscribes to the server's topics.
+  * @param node The node object that is connected to the ROS master.
   */
   private void connect(ConnectedNode node) {
     publishClient(node);
