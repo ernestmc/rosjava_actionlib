@@ -27,27 +27,43 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
   @Override
   public void onStart(ConnectedNode node) {
     ac = new ActionClient<FibonacciActionGoal, FibonacciActionFeedback, FibonacciActionResult>(node, "/fibonacci", FibonacciActionGoal._TYPE, FibonacciActionFeedback._TYPE, FibonacciActionResult._TYPE);
+    FibonacciActionGoal goalMessage;
     int repeat = 3;
+    int i;
+    String goalId = "fibonacci_test_";
 
     // Attach listener for the callbacks
     ac.attachListener(this);
 
     // Create Fibonacci goal message
-    FibonacciActionGoal goalMessage = (FibonacciActionGoal)ac.newGoalMessage();
-    FibonacciGoal fibonacciGoal = goalMessage.getGoal();
+    //goalMessage = (FibonacciActionGoal)ac.newGoalMessage();
+    //FibonacciGoal fibonacciGoal = goalMessage.getGoal();
 
     // set Fibonacci parameter
-    fibonacciGoal.setOrder(6);
+    //fibonacciGoal.setOrder(6);
 
-    while (repeat > 0) {
+    for (i = 0; i < repeat; i++) {
       sleep(10000);
-      System.out.println("Sending goal #" + repeat + "...");
-      ac.sendGoal(goalMessage);
+      System.out.println("Sending goal #" + i + "...");
+      goalMessage = (FibonacciActionGoal)ac.newGoalMessage();
+      goalMessage.getGoal().setOrder(i);
+      ac.sendGoal(goalMessage, goalId + i);
       System.out.println("Goal sent.");
-      //while(!resultReceived) sleep(100);
       resultReceived = false;
-      repeat--;
     }
+
+    // send another message and cancel it
+    goalId += i;
+    goalMessage = (FibonacciActionGoal)ac.newGoalMessage();
+    goalMessage.getGoal().setOrder(i);
+    System.out.println("Sending goal ID: " + goalId + "...");
+    ac.sendGoal(goalMessage, goalId);
+    System.out.println("Goal sent.");
+    sleep(2000);
+    System.out.println("Cancelling goal ID: " + goalId);
+    GoalID gid = ac.getGoalId(goalMessage);
+    ac.sendCancel(gid);
+    sleep(10000);
 
     System.exit(0);
   }
