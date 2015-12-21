@@ -1,3 +1,19 @@
+/**
+ * Copyright 2015 Creativa77 www.ekumenlab
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.github.ekumen.rosjava_actionlib;
 
 import org.ros.namespace.GraphName;
@@ -17,6 +33,10 @@ import actionlib_msgs.GoalStatusArray;
 import actionlib_msgs.GoalID;
 import actionlib_msgs.GoalStatus;
 
+/**
+ * Class to encapsulate the actiolib server's communication and goal management.
+ * @author Ernesto Corbellini <ecorbellini@ekumenlabs.com>
+ */
 public class ActionServer<T_ACTION_GOAL extends Message,
   T_ACTION_FEEDBACK extends Message,
   T_ACTION_RESULT extends Message> {
@@ -47,6 +67,17 @@ public class ActionServer<T_ACTION_GOAL extends Message,
   private HashMap<String, ServerGoal> goalTracker = new  HashMap<String,
     ServerGoal>(1);
 
+  /**
+   * Constructor.
+   * @param node Object representing a node connected to a ROS master.
+   * @param actionName String that identifies the name of this action. This name
+   * is used for naming the ROS topics.
+   * @param actionGoalType String holding the type for the action goal message.
+   * @param actionFeedbackType String holding the type for the action feedback
+   * message.
+   * @param actionResultType String holding the type for the action result
+   * message.
+   */
   ActionServer (ConnectedNode node, String actionName, String actionGoalType,
     String actionFeedbackType, String actionResultType) {
     this.node = node;
@@ -58,22 +89,46 @@ public class ActionServer<T_ACTION_GOAL extends Message,
     connect(node);
   }
 
+  /**
+   * Attach a listener to this actionlib server. The listener must implement the
+   * ActionServerListener interface which provides callback methods for each
+   * incoming message and event.
+   * @param target An object that implements the ActionServerListener interface.
+   * This object will receive the callbacks with the events.
+   */
   public void attachListener(ActionServerListener target) {
     callbackTarget = target;
   }
 
+  /**
+   * Publish the current status information for the tracked goals on the /status topic.
+   * @param status GoalStatusArray message containing the status to send.
+   * @see actionlib_msgs.GoalStatusArray
+   */
   public void sendStatus(GoalStatusArray status) {
     statusPublisher.publish(status);
   }
 
+  /**
+   * Publish a feedback message on the /feedback topic.
+   * @param feedback An action feedback message to send.
+   */
   public void sendFeedback(T_ACTION_FEEDBACK feedback) {
     feedbackPublisher.publish(feedback);
   }
 
+  /**
+   * Publish result message on the /result topic.
+   * @param result The action result message to send.
+   */
   public void sendResult(T_ACTION_RESULT result) {
     resultPublisher.publish(result);
   }
 
+  /**
+   * Publish the action server topics: /status, /feedback, /result
+   * @param node The object representing a node connected to a ROS master.
+   */
   private void publishServer(ConnectedNode node) {
     statusPublisher = node.newPublisher(actionName + "/status", GoalStatusArray._TYPE);
     feedbackPublisher = node.newPublisher(actionName + "/feedback", actionFeedbackType);
@@ -86,6 +141,9 @@ public class ActionServer<T_ACTION_GOAL extends Message,
     }, 2000, 1000);
   }
 
+  /**
+   * Stop publishing the action server topics.
+   */
   private void unpublishServer() {
     if (statusPublisher != null) {
       statusPublisher.shutdown(5, TimeUnit.SECONDS);
