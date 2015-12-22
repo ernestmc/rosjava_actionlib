@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="rosjava_actionlib" type="execute" name="rosjava_actionlib_server_demo" args="com.github.ekumen.rosjava_actionlib.TestServer"/>
+  <node pkg="actionlib_tutorials" type="fibonacci_client" name="fibonacci_client"/>
+</launch>
