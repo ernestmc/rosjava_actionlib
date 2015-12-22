@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2015 Ernesto Corbellini, ecorbellini@ekumenlabs.com
  * Copyright (C) 2011 Alexander Perzylo, Technische Universität München
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not
