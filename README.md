@@ -1,11 +1,13 @@
 # Actionlib for Rosjava
 A pure java implementation of [actionlib](http://wiki.ros.org/actionlib) for [rosjava](http://wiki.ros.org/rosjava).
 Features implemented:
-Basic client:
+
+### Basic client:
 * methods for publishing goal and cancel messages.
 * callback interface for status, feedback and result messages.
 * goal state tracking is not implemented yet
-Basic server:
+
+### Basic server:
 * methods for publishing result, feedback and status messages.
 * periodic goal status publishing as heartbeat
 * callback interface for accepting goals, and receiving cancel messages.
@@ -22,8 +24,6 @@ Basic server:
 ## Compiling:
 1. Go to the package folder: ```$ cd rosjava_actionlib```
 2. Compile the code: ```$ catkin_make```
-3. Move to the project folder: ```$ cd src/rosjava_actionlib```
-4. Build the execution target: ```$ ./gradlew deployApp```
 
 ## Running a test client:
 1. Open a new terminal and get a ros master running: ```$ roscore```
