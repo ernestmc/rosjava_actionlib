@@ -1,9 +1,15 @@
 # Actionlib for Rosjava
-A pure java implementation of [actionlib](http://wiki.ros.org/actionlib) for rosjava.
-For now there is a basic client implemented with the following features:
-* send goal
-* send cancel
+A pure java implementation of [actionlib](http://wiki.ros.org/actionlib) for [rosjava](http://wiki.ros.org/rosjava).
+Features implemented:
+Basic client:
+* methods for publishing goal and cancel messages.
 * callback interface for status, feedback and result messages.
+* goal state tracking is not implemented yet
+Basic server:
+* methods for publishing result, feedback and status messages.
+* periodic goal status publishing as heartbeat
+* callback interface for accepting goals, and receiving cancel messages.
+* multi-goal state tracking.
 
 
 ## Requirements:
@@ -19,43 +25,67 @@ For now there is a basic client implemented with the following features:
 3. Move to the project folder: ```$ cd src/rosjava_actionlib```
 4. Build the execution target: ```$ ./gradlew deployApp```
 
-## Running:
-1. Open a new terminal and get a ros server running: ```$ roscore```
+## Running a test client:
+1. Open a new terminal and get a ros master running: ```$ roscore```
 2. In another terminal run the actionlib sample server: ```$ rosrun actionlib_tutorials fibonacci_server```
-3. Run our test client:
+3. Run our client:
   * Go back to the package folder: ```cd ../..```
   * Source the project environment: ```$ source devel/setup.bash```
   * Run the client: ```$ rosrun rosjava_actionlib execute com.github.ekumen.rosjava_actionlib.TestClient```
 
-## Output
+## Output from the test client
 The test client will connect to the fibonacci server and send it a goal. It
 should then receive feedback from the server and a final response. The output
 should look something like this:
 ```
-Sending goal #3...
+Sending goal #0...
 Goal sent.
-Feedback from Fibonacci server: 0 1 1
-Feedback from Fibonacci server: 0 1 1 2
-Feedback from Fibonacci server: 0 1 1 2 3
-Feedback from Fibonacci server: 0 1 1 2 3 5
-Feedback from Fibonacci server: 0 1 1 2 3 5 8
-Feedback from Fibonacci server: 0 1 1 2 3 5 8 13
-Got Fibonacci result sequence!0 1 1 2 3 5 8 13
-Sending goal #2...
-Goal sent.
-Feedback from Fibonacci server: 0 1 1
-Feedback from Fibonacci server: 0 1 1 2
-Feedback from Fibonacci server: 0 1 1 2 3
-Feedback from Fibonacci server: 0 1 1 2 3 5
-Feedback from Fibonacci server: 0 1 1 2 3 5 8
-Feedback from Fibonacci server: 0 1 1 2 3 5 8 13
-Got Fibonacci result sequence!0 1 1 2 3 5 8 13
+Got Fibonacci result sequence!0 1
 Sending goal #1...
 Goal sent.
 Feedback from Fibonacci server: 0 1 1
-Feedback from Fibonacci server: 0 1 1 2
-Feedback from Fibonacci server: 0 1 1 2 3
-Feedback from Fibonacci server: 0 1 1 2 3 5
-Feedback from Fibonacci server: 0 1 1 2 3 5 8
-Feedback from Fibonacci server: 0 1 1 2 3 5 8 13
+Got Fibonacci result sequence!0 1 1
+Sending goal #2...
+Goal sent.
+Sending goal ID: fibonacci_test_3...
+Goal sent.
+Feedback from Fibonacci server: 0 1 1
+Got Fibonacci result sequence!Feedback from Fibonacci server:
+0 1 1
+Cancelling goal ID: fibonacci_test_3
+Got Fibonacci result sequence!
+
 ```
+
+## Running a test server:
+1. Run our server:
+  * Go back to the package folder: ```cd ../..```
+  * Source the project environment: ```$ source devel/setup.bash```
+  * Run the server: ```$ rosrun rosjava_actionlib execute com.github.ekumen.rosjava_actionlib.TestClient```
+2. If its not already running, open a new terminal and get a ros master running: ```$ roscore```
+3. In another terminal run the actionlib sample client: ```$ rosrun actionlib_tutorials fibonacci_client```
+4. Once finished, use Ctrl+C to close the server.
+
+## Output from the test server
+The test server will start running and wait for clients to connect and send goal messages.
+Once the fibonacci client sends a goal, the server accepts it and sends a result. The output
+should look something like this:
+```
+Goal received.
+Goal accepted.
+Sending result...
+```
+
+## Running demos for the server and the client
+You can launch a demo client and a fibonacci action server all at once using:
+```
+roslaunch rosjava_actionlib client_demo.launch --screen
+```
+
+
+You can also launch a demo server and a fibonacci action client all at once using:
+```
+roslaunch rosjava_actionlib server_demo.launch --screen
+```
+
+Use Ctrl+C to stop the execution once it's finished.
