@@ -61,7 +61,7 @@ Got Fibonacci result sequence!
 1. Run our server:
   * Go back to the package folder: ```cd ../..```
   * Source the project environment: ```$ source devel/setup.bash```
-  * Run the server: ```$ rosrun rosjava_actionlib execute com.github.ekumen.rosjava_actionlib.TestClient```
+  * Run the server: ```$ rosrun rosjava_actionlib execute com.github.ekumen.rosjava_actionlib.TestServer```
 2. If its not already running, open a new terminal and get a ros master running: ```$ roscore```
 3. In another terminal run the actionlib sample client: ```$ rosrun actionlib_tutorials fibonacci_client```
 4. Once finished, use Ctrl+C to close the server.
