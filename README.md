@@ -29,7 +29,6 @@ Features implemented:
 1. Open a new terminal and get a ros master running: ```$ roscore```
 2. In another terminal run the actionlib sample server: ```$ rosrun actionlib_tutorials fibonacci_server```
 3. Run our client:
-  * Go back to the package folder: ```cd ../..```
   * Source the project environment: ```$ source devel/setup.bash```
   * Run the client: ```$ rosrun rosjava_actionlib execute com.github.ekumen.rosjava_actionlib.TestClient```
 
@@ -59,7 +58,6 @@ Got Fibonacci result sequence!
 
 ## Running a test server:
 1. Run our server:
-  * Go back to the package folder: ```cd ../..```
   * Source the project environment: ```$ source devel/setup.bash```
   * Run the server: ```$ rosrun rosjava_actionlib execute com.github.ekumen.rosjava_actionlib.TestServer```
 2. If its not already running, open a new terminal and get a ros master running: ```$ roscore```
