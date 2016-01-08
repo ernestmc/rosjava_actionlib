@@ -21,6 +21,9 @@ Features implemented:
 * Also make sure you have the following packages: ```ros-indigo-actionlib``` ```ros-indigo-actionlib-tutorials``` ```ros-indigo-genjava```
 * Download the project: ```$ git clone https://github.com/ernestmc/rosjava_actionlib.git```
 
+You can find a video tutorial showing how to install and test the library following the instructions below:
+https://youtu.be/FmmsMdEbYFs
+
 ## Compiling:
 1. Go to the package folder: ```$ cd rosjava_actionlib```
 2. Compile the code: ```$ catkin_make```
