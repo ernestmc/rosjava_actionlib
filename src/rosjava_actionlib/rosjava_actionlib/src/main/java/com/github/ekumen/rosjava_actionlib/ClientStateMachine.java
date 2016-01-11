@@ -16,7 +16,8 @@
 
 package com.github.ekumen.rosjava_actionlib;
 
-
+import java.lang.Exception;
+import actionlib_msgs.GoalStatus;
 import java.util.Vector;
 import java.util.Iterator;
 
@@ -28,7 +29,7 @@ import java.util.Iterator;
  *   - The state returned on a transition is actually a vector of states that should be transitioned in sequence.
  *  TODO: change class name to ClientStateMachine
  */
-public class CommStateMachine {
+public class ClientStateMachine {
   // Local class to hold the states
   public static class ClientStates {
     public final static int INVALID_TRANSITION = -2;
@@ -53,28 +54,26 @@ public class CommStateMachine {
   /**
    * Constructor
    */
-  //public void CommStateMachine(ActionGoal actionGoal, transition_callback?, feedback_callback?, send_goal_function, send_cancel_function)
-  //public void CommStateMachine(ActionGoal actionGoal, transition_callback?, feedback_callback?, ActionGoalTrigger)
-  public void CommStateMachine(ActionGoal actionGoal)
+  public void ClientStateMachine()
   {
     // interface object for the callbacks?
     // store arguments locally in the object
-    this.goal = actionGoal;
+    //this.goal = actionGoal;
   }
 
   /*
    * Compare two objects.
    */
-  public boolean equals(CommStateMachine obj) {
+  public boolean equals(ClientStateMachine obj) {
     //return actionGoal.goalId.id == obj.actionGoal.goalId.id;
     return true;
   }
 
-  public void setState(int state) {
+  public synchronized void setState(int state) {
     this.state = state;
   }
 
-  public int getState() {
+  public synchronized int getState() {
     return this.state;
   }
 
@@ -108,66 +107,74 @@ public class CommStateMachine {
 
   }
 
-  public void transitionTo(int toState)
+  /**
+   * Update the state of the client upon the received status of the goal.
+   * @param goalStatus Status of the goal.
+   */
+  public synchronized void transition(int goalStatus)
   {
-    Vector nextStates;
-    Iterator iterStates;
-    int state;
+    Vector<Integer> nextStates;
+    Iterator<Integer> iterStates;
 
     // transition to next states
-    nextStates = getTransition(ActionGoal.GoalStates.ACTIVE);
+    nextStates = getTransition(goalStatus);
     iterStates = nextStates.iterator();
 
     while (iterStates.hasNext()) {
-      state = (int)iterStates.next();
+      this.state = iterStates.next();
     }
   }
 
   /**
-   * Get the next state transition depending on the current client state and the goal state.
-   * Note: this replaces the transition lookup table from the original implementation.
+   * Get the next state transition depending on the current client state and the
+   * goal state.
+   * @param goalStatus The current status of the tracked goal.
+   * @return A vector with the list of next states. The states should be
+   * transitioned in order. This is necessary because if we loose a state update
+   * we might still be able to infer the actual transition history that took us
+   * to the final goal state.
    */
-  public Vector getTransition(int goalStatus)
+  public Vector<Integer> getTransition(int goalStatus)
   {
-    Vector stateList = new Vector();
+    Vector<Integer> stateList = new Vector<Integer>();
 
     switch (this.state)
     {
       case ClientStates.WAITING_FOR_GOAL_ACK:
         switch (goalStatus)
         {
-          case ActionGoal.GoalStates.PENDING:
+          case actionlib_msgs.GoalStatus.PENDING:
             stateList.add(ClientStates.PENDING);
             break;
-          case ActionGoal.GoalStates.ACTIVE:
+          case actionlib_msgs.GoalStatus.ACTIVE:
             stateList.add(ClientStates.ACTIVE);
             break;
-          case ActionGoal.GoalStates.REJECTED:
+          case actionlib_msgs.GoalStatus.REJECTED:
             stateList.add(ClientStates.PENDING);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.RECALLING:
+          case actionlib_msgs.GoalStatus.RECALLING:
             stateList.add(ClientStates.PENDING);
             stateList.add(ClientStates.RECALLING);
             break;
-          case ActionGoal.GoalStates.RECALLED:
+          case actionlib_msgs.GoalStatus.RECALLED:
             stateList.add(ClientStates.PENDING);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.PREEMPTED:
+          case actionlib_msgs.GoalStatus.PREEMPTED:
             stateList.add(ClientStates.ACTIVE);
             stateList.add(ClientStates.PREEMPTING);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.SUCCEEDED:
+          case actionlib_msgs.GoalStatus.SUCCEEDED:
             stateList.add(ClientStates.ACTIVE);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.ABORTED:
+          case actionlib_msgs.GoalStatus.ABORTED:
             stateList.add(ClientStates.ACTIVE);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.PREEMPTING:
+          case actionlib_msgs.GoalStatus.PREEMPTING:
             stateList.add(ClientStates.ACTIVE);
             stateList.add(ClientStates.PREEMPTING);
             break;
@@ -176,36 +183,36 @@ public class CommStateMachine {
       case ClientStates.PENDING:
         switch (goalStatus)
         {
-          case ActionGoal.GoalStates.PENDING:
+          case actionlib_msgs.GoalStatus.PENDING:
             // no transition
             break;
-          case ActionGoal.GoalStates.ACTIVE:
+          case actionlib_msgs.GoalStatus.ACTIVE:
             stateList.add(ClientStates.ACTIVE);
             break;
-          case ActionGoal.GoalStates.REJECTED:
+          case actionlib_msgs.GoalStatus.REJECTED:
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.RECALLING:
+          case actionlib_msgs.GoalStatus.RECALLING:
             stateList.add(ClientStates.RECALLING);
             break;
-          case ActionGoal.GoalStates.RECALLED:
+          case actionlib_msgs.GoalStatus.RECALLED:
             stateList.add(ClientStates.RECALLING);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.PREEMPTED:
+          case actionlib_msgs.GoalStatus.PREEMPTED:
             stateList.add(ClientStates.ACTIVE);
             stateList.add(ClientStates.PREEMPTING);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.SUCCEEDED:
+          case actionlib_msgs.GoalStatus.SUCCEEDED:
             stateList.add(ClientStates.ACTIVE);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.ABORTED:
+          case actionlib_msgs.GoalStatus.ABORTED:
             stateList.add(ClientStates.ACTIVE);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.PREEMPTING:
+          case actionlib_msgs.GoalStatus.PREEMPTING:
             stateList.add(ClientStates.ACTIVE);
             stateList.add(ClientStates.PREEMPTING);
             break;
@@ -214,32 +221,32 @@ public class CommStateMachine {
       case ClientStates.ACTIVE:
         switch (goalStatus)
         {
-          case ActionGoal.GoalStates.PENDING:
+          case actionlib_msgs.GoalStatus.PENDING:
             stateList.add(ClientStates.INVALID_TRANSITION);
             break;
-          case ActionGoal.GoalStates.ACTIVE:
+          case actionlib_msgs.GoalStatus.ACTIVE:
             // no transition
             break;
-          case ActionGoal.GoalStates.REJECTED:
+          case actionlib_msgs.GoalStatus.REJECTED:
             stateList.add(ClientStates.INVALID_TRANSITION);
             break;
-          case ActionGoal.GoalStates.RECALLING:
+          case actionlib_msgs.GoalStatus.RECALLING:
             stateList.add(ClientStates.INVALID_TRANSITION);
             break;
-          case ActionGoal.GoalStates.RECALLED:
+          case actionlib_msgs.GoalStatus.RECALLED:
             stateList.add(ClientStates.INVALID_TRANSITION);
             break;
-          case ActionGoal.GoalStates.PREEMPTED:
+          case actionlib_msgs.GoalStatus.PREEMPTED:
             stateList.add(ClientStates.PREEMPTING);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.SUCCEEDED:
+          case actionlib_msgs.GoalStatus.SUCCEEDED:
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.ABORTED:
+          case actionlib_msgs.GoalStatus.ABORTED:
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.PREEMPTING:
+          case actionlib_msgs.GoalStatus.PREEMPTING:
             stateList.add(ClientStates.PREEMPTING);
             break;
         }
@@ -247,31 +254,31 @@ public class CommStateMachine {
       case ClientStates.WAITING_FOR_RESULT:
         switch (goalStatus)
         {
-          case ActionGoal.GoalStates.PENDING:
+          case actionlib_msgs.GoalStatus.PENDING:
             stateList.add(ClientStates.INVALID_TRANSITION);
             break;
-          case ActionGoal.GoalStates.ACTIVE:
+          case actionlib_msgs.GoalStatus.ACTIVE:
             // no transition
             break;
-          case ActionGoal.GoalStates.REJECTED:
+          case actionlib_msgs.GoalStatus.REJECTED:
             // no transition
             break;
-          case ActionGoal.GoalStates.RECALLING:
+          case actionlib_msgs.GoalStatus.RECALLING:
             stateList.add(ClientStates.INVALID_TRANSITION);
             break;
-          case ActionGoal.GoalStates.RECALLED:
+          case actionlib_msgs.GoalStatus.RECALLED:
             // no transition
             break;
-          case ActionGoal.GoalStates.PREEMPTED:
+          case actionlib_msgs.GoalStatus.PREEMPTED:
             // no transition
             break;
-          case ActionGoal.GoalStates.SUCCEEDED:
+          case actionlib_msgs.GoalStatus.SUCCEEDED:
             // no transition
             break;
-          case ActionGoal.GoalStates.ABORTED:
+          case actionlib_msgs.GoalStatus.ABORTED:
             // no transition
             break;
-          case ActionGoal.GoalStates.PREEMPTING:
+          case actionlib_msgs.GoalStatus.PREEMPTING:
             stateList.add(ClientStates.INVALID_TRANSITION);
             break;
         }
@@ -279,35 +286,35 @@ public class CommStateMachine {
       case ClientStates.WAITING_FOR_CANCEL_ACK:
         switch (goalStatus)
         {
-          case ActionGoal.GoalStates.PENDING:
+          case actionlib_msgs.GoalStatus.PENDING:
             // no transition
             break;
-          case ActionGoal.GoalStates.ACTIVE:
+          case actionlib_msgs.GoalStatus.ACTIVE:
             // no transition
             break;
-          case ActionGoal.GoalStates.REJECTED:
+          case actionlib_msgs.GoalStatus.REJECTED:
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.RECALLING:
+          case actionlib_msgs.GoalStatus.RECALLING:
             stateList.add(ClientStates.RECALLING);
             break;
-          case ActionGoal.GoalStates.RECALLED:
+          case actionlib_msgs.GoalStatus.RECALLED:
             stateList.add(ClientStates.RECALLING);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.PREEMPTED:
+          case actionlib_msgs.GoalStatus.PREEMPTED:
             stateList.add(ClientStates.PREEMPTING);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.SUCCEEDED:
+          case actionlib_msgs.GoalStatus.SUCCEEDED:
             stateList.add(ClientStates.PREEMPTING);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.ABORTED:
+          case actionlib_msgs.GoalStatus.ABORTED:
             stateList.add(ClientStates.PREEMPTING);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.PREEMPTING:
+          case actionlib_msgs.GoalStatus.PREEMPTING:
             stateList.add(ClientStates.PREEMPTING);
             break;
         }
@@ -315,35 +322,35 @@ public class CommStateMachine {
       case ClientStates.RECALLING:
         switch (goalStatus)
         {
-          case ActionGoal.GoalStates.PENDING:
+          case actionlib_msgs.GoalStatus.PENDING:
             // no transition
             break;
-          case ActionGoal.GoalStates.ACTIVE:
+          case actionlib_msgs.GoalStatus.ACTIVE:
             // no transition
             break;
-          case ActionGoal.GoalStates.REJECTED:
+          case actionlib_msgs.GoalStatus.REJECTED:
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.RECALLING:
+          case actionlib_msgs.GoalStatus.RECALLING:
             stateList.add(ClientStates.RECALLING);
             break;
-          case ActionGoal.GoalStates.RECALLED:
+          case actionlib_msgs.GoalStatus.RECALLED:
             stateList.add(ClientStates.RECALLING);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.PREEMPTED:
+          case actionlib_msgs.GoalStatus.PREEMPTED:
             stateList.add(ClientStates.PREEMPTING);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.SUCCEEDED:
+          case actionlib_msgs.GoalStatus.SUCCEEDED:
             stateList.add(ClientStates.PREEMPTING);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.ABORTED:
+          case actionlib_msgs.GoalStatus.ABORTED:
             stateList.add(ClientStates.PREEMPTING);
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.PREEMPTING:
+          case actionlib_msgs.GoalStatus.PREEMPTING:
             stateList.add(ClientStates.PREEMPTING);
             break;
         }
@@ -351,31 +358,31 @@ public class CommStateMachine {
       case ClientStates.PREEMPTING:
         switch (goalStatus)
         {
-          case ActionGoal.GoalStates.PENDING:
+          case actionlib_msgs.GoalStatus.PENDING:
             stateList.add(ClientStates.INVALID_TRANSITION);
             break;
-          case ActionGoal.GoalStates.ACTIVE:
+          case actionlib_msgs.GoalStatus.ACTIVE:
             stateList.add(ClientStates.INVALID_TRANSITION);
             break;
-          case ActionGoal.GoalStates.REJECTED:
+          case actionlib_msgs.GoalStatus.REJECTED:
             stateList.add(ClientStates.INVALID_TRANSITION);
             break;
-          case ActionGoal.GoalStates.RECALLING:
+          case actionlib_msgs.GoalStatus.RECALLING:
             stateList.add(ClientStates.INVALID_TRANSITION);
             break;
-          case ActionGoal.GoalStates.RECALLED:
+          case actionlib_msgs.GoalStatus.RECALLED:
             stateList.add(ClientStates.INVALID_TRANSITION);
             break;
-          case ActionGoal.GoalStates.PREEMPTED:
+          case actionlib_msgs.GoalStatus.PREEMPTED:
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.SUCCEEDED:
+          case actionlib_msgs.GoalStatus.SUCCEEDED:
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.ABORTED:
+          case actionlib_msgs.GoalStatus.ABORTED:
             stateList.add(ClientStates.WAITING_FOR_RESULT);
             break;
-          case ActionGoal.GoalStates.PREEMPTING:
+          case actionlib_msgs.GoalStatus.PREEMPTING:
             // no transition
             break;
         }
@@ -383,31 +390,31 @@ public class CommStateMachine {
       case ClientStates.DONE:
         switch (goalStatus)
         {
-          case ActionGoal.GoalStates.PENDING:
+          case actionlib_msgs.GoalStatus.PENDING:
             stateList.add(ClientStates.INVALID_TRANSITION);
             break;
-          case ActionGoal.GoalStates.ACTIVE:
+          case actionlib_msgs.GoalStatus.ACTIVE:
             stateList.add(ClientStates.INVALID_TRANSITION);
             break;
-          case ActionGoal.GoalStates.REJECTED:
+          case actionlib_msgs.GoalStatus.REJECTED:
             // no transition
             break;
-          case ActionGoal.GoalStates.RECALLING:
+          case actionlib_msgs.GoalStatus.RECALLING:
             stateList.add(ClientStates.INVALID_TRANSITION);
             break;
-          case ActionGoal.GoalStates.RECALLED:
+          case actionlib_msgs.GoalStatus.RECALLED:
             // no transition
             break;
-          case ActionGoal.GoalStates.PREEMPTED:
+          case actionlib_msgs.GoalStatus.PREEMPTED:
             // no transition
             break;
-          case ActionGoal.GoalStates.SUCCEEDED:
+          case actionlib_msgs.GoalStatus.SUCCEEDED:
             // no transition
             break;
-          case ActionGoal.GoalStates.ABORTED:
+          case actionlib_msgs.GoalStatus.ABORTED:
             // no transition
             break;
-          case ActionGoal.GoalStates.PREEMPTING:
+          case actionlib_msgs.GoalStatus.PREEMPTING:
             stateList.add(ClientStates.INVALID_TRANSITION);
             break;
         }
