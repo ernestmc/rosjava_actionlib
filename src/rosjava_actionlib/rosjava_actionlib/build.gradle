@@ -30,6 +30,7 @@ dependencies {
   /* An external maven artifact dependency */
 
   compile 'org.ros.rosjava_core:rosjava:[0.2,0.3)'
+  compile 'org.apache.directory.studio:org.apache.commons.logging:[1.1,1.2)'
   testCompile 'junit:junit:4.12'
 
   /* Example of a local subproject dependency */
@@ -46,6 +47,6 @@ task deployApp(dependsOn: 'installApp') << {
   }
   File link = new File(binDir,"execute")
   File target = new File(project.projectDir, "build/install/$project.name/bin/$project.name")
-  println "Creating symlink from $link.absolutePath to $target.absolutePath"
+  //println "Creating symlink from $link.absolutePath to $target.absolutePath"
   ant.symlink(link: link.absolutePath, resource: target.absolutePath, overwrite: true)
 }
