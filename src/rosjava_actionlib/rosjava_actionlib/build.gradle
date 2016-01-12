@@ -47,5 +47,5 @@ task deployApp(dependsOn: 'installApp') << {
   File link = new File(binDir,"execute")
   File target = new File(project.projectDir, "build/install/$project.name/bin/$project.name")
   println "Creating symlink from $link.absolutePath to $target.absolutePath"
-  ant.symlink(link: link.absolutePath, resource: target.absolutePath)
+  ant.symlink(link: link.absolutePath, resource: target.absolutePath, overwrite: true)
 }
