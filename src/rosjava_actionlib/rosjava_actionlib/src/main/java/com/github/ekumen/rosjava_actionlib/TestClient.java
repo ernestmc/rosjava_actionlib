@@ -55,6 +55,10 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
     // Attach listener for the callbacks
     ac.attachListener(this);
 
+    System.out.println("Waiting for actionlib server to start...");
+    ac.waitForActionServerToStart();
+    System.out.println("actionlib server started.");
+
     // Create Fibonacci goal message
     //goalMessage = (FibonacciActionGoal)ac.newGoalMessage();
     //FibonacciGoal fibonacciGoal = goalMessage.getGoal();
@@ -63,10 +67,10 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
     //fibonacciGoal.setOrder(6);
 
     for (i = 0; i < repeat; i++) {
-      sleep(10000);
+      //sleep(10000);
       System.out.println("Sending goal #" + i + "...");
       goalMessage = (FibonacciActionGoal)ac.newGoalMessage();
-      goalMessage.getGoal().setOrder(i);
+      goalMessage.getGoal().setOrder(i*3);
       ac.sendGoal(goalMessage, goalId + i);
       System.out.println("Goal sent.");
       resultReceived = false;

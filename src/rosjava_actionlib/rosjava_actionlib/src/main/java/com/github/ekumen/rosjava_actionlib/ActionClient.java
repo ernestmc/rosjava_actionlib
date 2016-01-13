@@ -21,12 +21,17 @@ import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.node.topic.Subscriber;
 import org.ros.node.topic.Publisher;
+import org.ros.node.topic.SubscriberListener;
+import org.ros.internal.node.topic.PublisherIdentifier;
+import org.ros.node.topic.DefaultSubscriberListener;
 import org.ros.message.MessageListener;
 import org.ros.internal.message.Message;
 import java.util.concurrent.TimeUnit;
 import java.lang.reflect.Method;
 import actionlib_msgs.GoalStatusArray;
 import actionlib_msgs.GoalID;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Client implementation for actionlib.
@@ -35,7 +40,7 @@ import actionlib_msgs.GoalID;
  */
 public class ActionClient<T_ACTION_GOAL extends Message,
   T_ACTION_FEEDBACK extends Message,
-  T_ACTION_RESULT extends Message> {
+  T_ACTION_RESULT extends Message> extends DefaultSubscriberListener {
 
   T_ACTION_GOAL actionGoal;
   String actionGoalType;
@@ -50,6 +55,10 @@ public class ActionClient<T_ACTION_GOAL extends Message,
   String actionName;
   ActionClientListener callbackTarget = null;
   GoalIDGenerator goalIdGenerator = null;
+  volatile boolean statusReceivedFlag = false;
+  volatile boolean feedbackPublisherFlag = false;
+  volatile boolean resultPublisherFlag = false;
+  private Log log = LogFactory.getLog(ActionClient.class);
 
   /**
    * Constructor for an ActionClient object.
@@ -188,6 +197,9 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     serverFeedback = node.newSubscriber(actionName + "/feedback", actionFeedbackType);
     serverStatus = node.newSubscriber(actionName + "/status", GoalStatusArray._TYPE);
 
+    serverFeedback.addSubscriberListener(this);
+    serverResult.addSubscriberListener(this);
+
     serverFeedback.addMessageListener(new MessageListener<T_ACTION_FEEDBACK>() {
       @Override
       public void onNewMessage(T_ACTION_FEEDBACK message) {
@@ -258,6 +270,7 @@ public class ActionClient<T_ACTION_GOAL extends Message,
    * @see actionlib_msgs.GoalStatusArray
    */
   public void gotStatus(GoalStatusArray message) {
+    statusReceivedFlag = true;
     // Propagate the callback
     if (callbackTarget != null) {
       callbackTarget.statusReceived(message);
@@ -271,6 +284,36 @@ public class ActionClient<T_ACTION_GOAL extends Message,
   private void connect(ConnectedNode node) {
     publishClient(node);
     subscribeToServer(node);
+  }
+
+  /**
+   * Wait for an actionlib server to connect.
+   */
+  public boolean waitForActionServerToStart() {
+    boolean res = false;
+
+    while (!res) {
+      res = goalPublisher.hasSubscribers() &&
+        cancelPublisher.hasSubscribers() &&
+        feedbackPublisherFlag &&
+        resultPublisherFlag &&
+        statusReceivedFlag;
+    }
+    return res;
+  }
+
+  @Override
+  public void onNewPublisher(Subscriber subscriber, PublisherIdentifier publisherIdentifier) {
+  //public void onNewFeedbackPublisher(Subscriber<T_ACTION_FEEDBACK> subscriber, PublisherIdentifier publisherIdentifier) {
+    if (subscriber.equals(serverFeedback)) {
+      feedbackPublisherFlag = true;
+      log.info("Found server publishing on the " + actionName + "/feedback topic.");
+    } else {
+      if (subscriber.equals(serverResult)) {
+        resultPublisherFlag = true;
+        log.info("Found server publishing on the " + actionName + "/result topic.");
+      }
+    }
   }
 
   /**
