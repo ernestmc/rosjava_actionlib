@@ -24,7 +24,7 @@ import java.util.Iterator;
 
 /**
  * State machine for the action client.
- * @author Ernesto Corbellini <ecorbellini@ekumenlabs.com>
+ * @author Ernesto Corbellini ecorbellini@ekumenlabs.com
  * Comments:
  *   - The state returned on a transition is actually a vector of states that should be transitioned in sequence.
  *  TODO: change class name to ClientStateMachine
@@ -79,7 +79,6 @@ public class ClientStateMachine {
 
   /**
    * Update the state of the client based on the current state and the goal state.
-   * Note: This method uses a mutex in the original implementation so we make it synchronized.
    */
   public synchronized void updateStatus(int status)
   {

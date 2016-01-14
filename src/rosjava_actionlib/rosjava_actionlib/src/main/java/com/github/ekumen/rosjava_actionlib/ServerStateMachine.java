@@ -21,7 +21,7 @@ import actionlib_msgs.GoalStatus;
 
 /*
  * Class to manage the server state machine transitions.
- * @author Ernesto Corbellini <ecorbellini@ekumenlabs.com>
+ * @author Ernesto Corbellini ecorbellini@ekumenlabs.com
  */
 public class ServerStateMachine {
   public static class Events {

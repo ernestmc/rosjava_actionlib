@@ -35,7 +35,7 @@ import actionlib_msgs.GoalStatus;
 
 /**
  * Class to encapsulate the actiolib server's communication and goal management.
- * @author Ernesto Corbellini <ecorbellini@ekumenlabs.com>
+ * @author Ernesto Corbellini ecorbellini@ekumenlabs.com
  */
 public class ActionServer<T_ACTION_GOAL extends Message,
   T_ACTION_FEEDBACK extends Message,

@@ -24,7 +24,7 @@ import actionlib_msgs.GoalStatusArray;
  * Listener interface to receive the incoming messages from the ActionLib server.
  * A client should implement this interface if it wants to receive the callbacks
  * with information from the server.
- * @author Ernesto Corbellini <ecorbellini@ekumenlabs.com>
+ * @author Ernesto Corbellini ecorbellini@ekumenlabs.com
  */
 public interface ActionClientListener<T_ACTION_FEEDBACK extends Message,
   T_ACTION_RESULT extends Message> {

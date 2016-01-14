@@ -36,7 +36,7 @@ import org.apache.commons.logging.LogFactory;
 /**
  * Client implementation for actionlib.
  * This class encapsulates the communication with an actionlib server.
- * @author Ernesto Corbellini <ecorbellini@ekumenlabs.com>
+ * @author Ernesto Corbellini ecorbellini@ekumenlabs.com
  */
 public class ActionClient<T_ACTION_GOAL extends Message,
   T_ACTION_FEEDBACK extends Message,

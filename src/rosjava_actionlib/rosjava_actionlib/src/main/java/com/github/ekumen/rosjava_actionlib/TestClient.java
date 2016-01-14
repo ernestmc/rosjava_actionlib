@@ -33,7 +33,7 @@ import actionlib_msgs.GoalStatus;
 
 /**
  * Class to test the actionlib client.
- * @author Ernesto Corbellini <ecorbellini@ekumenlabs.com>
+ * @author Ernesto Corbellini ecorbellini@ekumenlabs.com
  */
 public class TestClient extends AbstractNodeMain implements ActionClientListener<FibonacciActionFeedback, FibonacciActionResult> {
   private ActionClient ac = null;
