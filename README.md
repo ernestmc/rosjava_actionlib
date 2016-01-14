@@ -2,6 +2,8 @@
 A pure java implementation of [actionlib](http://wiki.ros.org/actionlib) for [rosjava](http://wiki.ros.org/rosjava).
 Features implemented:
 
+Latest release: [v0.1.0](https://github.com/ernestmc/rosjava_actionlib/releases/tag/v0.1.0)
+
 ### Basic client:
 * methods for publishing goal and cancel messages.
 * callback interface for status, feedback and result messages.
@@ -19,14 +21,17 @@ Features implemented:
 * Rosjava ```$ sudo apt-get install ros-indigo-rosjava``` http://wiki.ros.org/rosjava/Tutorials/indigo/Installation
 * Java 1.7 or greater (OpenJDK should work)
 * Also make sure you have the following packages: ```ros-indigo-actionlib``` ```ros-indigo-actionlib-tutorials``` ```ros-indigo-genjava```
-* Download the project: ```$ git clone https://github.com/ernestmc/rosjava_actionlib.git```
 
 You can find a video tutorial showing how to install and test the library following the instructions below:
 https://youtu.be/FmmsMdEbYFs
 
+## Downloading:
+1. Download the latest release of the project: https://github.com/ernestmc/rosjava_actionlib/archive/v0.1.0.zip
+2. Unzip it somewhere.
+
 ## Compiling:
-1. Go to the package folder: ```$ cd rosjava_actionlib```
-2. Compile the code: ```$ catkin_make```
+1. Open a terminal inside the folder where you unzipped the package.
+2. Compile the code using the following command: ```$ catkin_make```
 
 ## Running a test client:
 1. Open a new terminal and get a ros master running: ```$ roscore```
