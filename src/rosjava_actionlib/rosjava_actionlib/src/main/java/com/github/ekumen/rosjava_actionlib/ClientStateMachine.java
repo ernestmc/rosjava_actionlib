@@ -25,10 +25,7 @@ import java.util.Iterator;
 /**
  * State machine for the action client.
  * @author Ernesto Corbellini ecorbellini@ekumenlabs.com
- * Comments:
- *   - The state returned on a transition is actually a vector of states that should be transitioned in sequence.
- *  TODO: change class name to ClientStateMachine
- */
+  */
 public class ClientStateMachine {
   // Local class to hold the states
   public static class ClientStates {
@@ -45,7 +42,6 @@ public class ClientStateMachine {
     public final static int LOST = 8;
   }
 
-  ActionGoal goal;
   int latestGoalStatus;
   int state;
   int nextState;
@@ -59,14 +55,6 @@ public class ClientStateMachine {
     // interface object for the callbacks?
     // store arguments locally in the object
     //this.goal = actionGoal;
-  }
-
-  /*
-   * Compare two objects.
-   */
-  public boolean equals(ClientStateMachine obj) {
-    //return actionGoal.goalId.id == obj.actionGoal.goalId.id;
-    return true;
   }
 
   public synchronized void setState(int state) {
@@ -420,6 +408,25 @@ public class ClientStateMachine {
         break;
     }
     return stateList;
+  }
+
+  /**
+   * Cancel action goal. The goal can only be cancelled if its in certain
+   * states. If it can be cancelled the state will be changed to
+   * WAITING_FOR_CANCEL_ACK.
+   * @return True if the goal can be cancelled, false otherwise.
+   */
+  public boolean cancel() {
+    bolean ret = false;
+    switch (stateMachine.getState()) {
+      case ClientStates.WAITING_FOR_GOAL_ACK:
+      case ClientStates.PENDING:
+      case ClientStates.ACTIVE:
+        this.state = ClientStates.WAITING_FOR_CANCEL_ACK;
+        ret = true;
+        break;
+    }
+    return ret;
   }
 
   public void markAsLost()
