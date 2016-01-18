@@ -16,6 +16,7 @@
 
 package com.github.ekumen.rosjava_actionlib;
 
+import org.ros.internal.message.Message;
 import actionlib_msgs.GoalID;
 import actionlib_msgs.GoalStatus;
 
@@ -23,17 +24,17 @@ import actionlib_msgs.GoalStatus;
  * Class that binds and action goal with a state machine to track its state.
  * @author Ernesto Corbellini ecorbellini@ekumenlabs.com
  */
-public class ClientGoalManager<T_ACTION_GOAL extends Message> {
-  public ActionGoal<T_ACTION_GOAL> actionGoal = null;
+public class ClientGoalManager<T_ACTION_GOAL extends Message, T_GOAL extends Message> {
+  public ActionGoal<T_ACTION_GOAL, T_GOAL> actionGoal = null;
   public ClientStateMachine stateMachine = null;
 
-  public void sendGoal(ActionGoal<T_ACTION_GOAL> ag) {
+  public void sendGoal(ActionGoal<T_ACTION_GOAL, T_GOAL> ag) {
     actionGoal = ag;
     stateMachine = new ClientStateMachine();
     stateMachine.setState(ClientStateMachine.ClientStates.WAITING_FOR_GOAL_ACK);
   }
 
   public boolean cancelGoal() {
-    return stateMachine.cancelGoal();
+    return stateMachine.cancel();
   }
 }

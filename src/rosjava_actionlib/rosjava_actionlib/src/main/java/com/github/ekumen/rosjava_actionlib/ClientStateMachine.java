@@ -417,8 +417,8 @@ public class ClientStateMachine {
    * @return True if the goal can be cancelled, false otherwise.
    */
   public boolean cancel() {
-    bolean ret = false;
-    switch (stateMachine.getState()) {
+    boolean ret = false;
+    switch (state) {
       case ClientStates.WAITING_FOR_GOAL_ACK:
       case ClientStates.PENDING:
       case ClientStates.ACTIVE:
