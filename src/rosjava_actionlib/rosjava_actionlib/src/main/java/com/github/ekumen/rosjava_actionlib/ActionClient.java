@@ -43,6 +43,7 @@ public class ActionClient<T_ACTION_GOAL extends Message,
   T_ACTION_RESULT extends Message> extends DefaultSubscriberListener {
 
   T_ACTION_GOAL actionGoal;
+  ClientGoalManager goalManager;
   String actionGoalType;
   String actionResultType;
   String actionFeedbackType;
@@ -82,6 +83,7 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     this.actionResultType = actionResultType;
     goalIdGenerator = new GoalIDGenerator(node);
     connect(node);
+    goalManager = new ClientGoalManager();
   }
 
   public void attachListener(ActionClientListener target) {
