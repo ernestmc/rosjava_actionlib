@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package>
   <name>rosjava_actionlib</name>
-  <version>0.1.0</version>
+  <version>0.2.0</version>
   <description>Actionlib for Rosjava. A pure java implementation of actionlib.</description>
 
   <maintainer email="ecorbellini@ekumenlabs.com">Ernesto Corbellini</maintainer>
