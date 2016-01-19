@@ -26,8 +26,15 @@ import actionlib_msgs.GoalID;
  * Class to encapsulate the action goal object.
  * @author Ernesto Corbellini ecorbellini@ekumenlabs.com
  */
-public class ActionGoal<T_ACTION_GOAL extends Message, T_GOAL extends Message> {
+public class ActionGoal<T_ACTION_GOAL extends Message> {
   private T_ACTION_GOAL goalMessage = null;
+
+  public ActionGoal(T_ACTION_GOAL ag) {
+    goalMessage = ag;
+  }
+
+  public ActionGoal() {
+  }
 
   /**
    * Return the sequence number of the action goal message's header.
@@ -198,7 +205,7 @@ public class ActionGoal<T_ACTION_GOAL extends Message, T_GOAL extends Message> {
       try {
         Method m = goalMessage.getClass().getMethod("getGoalId");
         m.setAccessible(true); // workaround for known bug http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6924232
-        gid= (GoalID)m.invoke(goalMessage);
+        gid = (GoalID)m.invoke(goalMessage);
       }
       catch (Exception e) {
         e.printStackTrace(System.out);
@@ -219,13 +226,13 @@ public class ActionGoal<T_ACTION_GOAL extends Message, T_GOAL extends Message> {
 
   }
 
-  public T_GOAL getGoalMessage() {
-    T_GOAL g = null;
+  public Message getGoalMessage() {
+    Message g = null;
     if (goalMessage != null) {
       try {
         Method m = goalMessage.getClass().getMethod("getGoal");
         m.setAccessible(true); // workaround for known bug http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6924232
-        g= (T_GOAL)m.invoke(goalMessage);
+        g = (Message)m.invoke(goalMessage);
       }
       catch (Exception e) {
         e.printStackTrace(System.out);
@@ -233,8 +240,18 @@ public class ActionGoal<T_ACTION_GOAL extends Message, T_GOAL extends Message> {
     }
     return g;
   }
-  public void setGoalMessage(T_GOAL gm) {
 
+  public void setGoalMessage(Message gm) {
+    if (goalMessage != null) {
+      try {
+        Method m = goalMessage.getClass().getMethod("setGoal", Message.class);
+        m.setAccessible(true); // workaround for known bug http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6924232
+        m.invoke(goalMessage, gm);
+      }
+      catch (Exception e) {
+        e.printStackTrace(System.out);
+      }
+    }
   }
 
   public boolean equals(ActionGoal ag) {
