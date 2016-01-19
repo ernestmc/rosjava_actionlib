@@ -27,8 +27,10 @@ import org.ros.node.topic.DefaultSubscriberListener;
 import org.ros.message.MessageListener;
 import org.ros.internal.message.Message;
 import java.util.concurrent.TimeUnit;
+import java.util.List;
 import java.lang.reflect.Method;
 import actionlib_msgs.GoalStatusArray;
+import actionlib_msgs.GoalStatus;
 import actionlib_msgs.GoalID;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,7 +45,7 @@ public class ActionClient<T_ACTION_GOAL extends Message,
   T_ACTION_RESULT extends Message> extends DefaultSubscriberListener {
 
   T_ACTION_GOAL actionGoal;
-  ClientGoalManager goalManager;
+  ClientGoalManager<T_ACTION_GOAL> goalManager;
   String actionGoalType;
   String actionResultType;
   String actionFeedbackType;
@@ -83,7 +85,7 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     this.actionResultType = actionResultType;
     goalIdGenerator = new GoalIDGenerator(node);
     connect(node);
-    goalManager = new ClientGoalManager();
+    goalManager = new ClientGoalManager(new ActionGoal<T_ACTION_GOAL>());
   }
 
   public void attachListener(ActionClientListener target) {
@@ -97,14 +99,15 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     * @param id A string containing the ID for the goal. The ID should represent
     * this goal in a unique fashion in the server and the client.
     */
-  public void sendGoal(T_ACTION_GOAL goal, String id) {
-    GoalID gid = getGoalId(goal);
+  public void sendGoal(T_ACTION_GOAL agMessage, String id) {
+    GoalID gid = getGoalId(agMessage);
     if (id == "") {
       goalIdGenerator.generateID(gid);
     } else {
       gid.setId(id);
     }
-    goalPublisher.publish(goal);
+    goalManager.setGoal(agMessage);
+    goalPublisher.publish(agMessage);
   }
 
   /**
@@ -112,8 +115,8 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     * is dependent on the application. A goal ID will be automatically generated.
     * @param goal The action goal message.
     */
-  public void sendGoal(T_ACTION_GOAL goal) {
-    sendGoal(goal, "");
+  public void sendGoal(T_ACTION_GOAL agMessage) {
+    sendGoal(agMessage, "");
   }
 
   /**
@@ -273,10 +276,36 @@ public class ActionClient<T_ACTION_GOAL extends Message,
    */
   public void gotStatus(GoalStatusArray message) {
     statusReceivedFlag = true;
+    // Find the status for our current goal
+    GoalStatus gstat = findStatus(message);
+    if (gstat != null) {
+      // update the goal status tracking
+      goalManager.updateStatus(gstat.getStatus());
+    }
     // Propagate the callback
     if (callbackTarget != null) {
       callbackTarget.statusReceived(message);
     }
+  }
+
+  /**
+   * Walk through the status array and find the status for the action goal that
+   * we are interested in.
+   * @param statusMessage The message with the goal status array
+   * (actionlib_msgs.GoalStatusArray)
+   * @return The goal status message for the goal we want or null if we didn't
+   * find it.
+   */
+  public GoalStatus findStatus(GoalStatusArray statusMessage) {
+    GoalStatus gstat = null;
+    List<GoalStatus> statusList = statusMessage.getStatusList();
+    for (GoalStatus s : statusList) {
+      if (s.getGoalId().getId() == goalManager.actionGoal.getGoalId()) {
+        // this is the goal we are interested in
+        gstat = s;
+      }
+    }
+    return gstat;
   }
 
   /**
