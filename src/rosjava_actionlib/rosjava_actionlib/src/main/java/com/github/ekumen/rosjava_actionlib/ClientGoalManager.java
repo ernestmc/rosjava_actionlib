@@ -48,6 +48,10 @@ public class ClientGoalManager<T_ACTION_GOAL extends Message> {
     return stateMachine.cancel();
   }
 
+  public void resultReceived() {
+    stateMachine.resultReceived();
+  }
+
   public void updateStatus(int status) {
     stateMachine.transition(status);
   }

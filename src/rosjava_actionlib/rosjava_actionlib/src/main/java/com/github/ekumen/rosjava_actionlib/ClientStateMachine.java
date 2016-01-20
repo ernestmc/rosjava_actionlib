@@ -458,11 +458,17 @@ public class ClientStateMachine {
       case ClientStates.WAITING_FOR_GOAL_ACK:
       case ClientStates.PENDING:
       case ClientStates.ACTIVE:
-        this.state = ClientStates.WAITING_FOR_CANCEL_ACK;
+        state = ClientStates.WAITING_FOR_CANCEL_ACK;
         ret = true;
         break;
     }
     return ret;
+  }
+
+  public void resultReceived() {
+    if (state == ClientStates.WAITING_FOR_RESULT) {
+      state = ClientStates.DONE;
+    }
   }
 
   public void markAsLost()

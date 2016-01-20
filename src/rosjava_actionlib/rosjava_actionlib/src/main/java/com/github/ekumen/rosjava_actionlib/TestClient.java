@@ -83,15 +83,16 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
     // send another message and cancel it
     goalId += i;
     goalMessage = (FibonacciActionGoal)ac.newGoalMessage();
-    goalMessage.getGoal().setOrder(2);
-    System.out.println("Sending goal ID: " + goalId + "...");
-    ac.sendGoal(goalMessage, goalId);
-    System.out.println("Goal sent.");
-    sleep(2000);
-    System.out.println("Cancelling goal ID: " + goalId);
+    goalMessage.getGoal().setOrder(3);
+    //System.out.println("Sending goal ID: " + goalId + "...");
+    //ac.sendGoal(goalMessage, goalId);
+    ac.sendGoal(goalMessage);
     GoalID gid = ac.getGoalId(goalMessage);
-    ac.sendCancel(gid);
-    sleep(10000);
+    System.out.println("Goal sent. Goal ID: " + gid);
+    //sleep(1000);
+    //System.out.println("Cancelling goal ID: " + goalId);
+    //ac.sendCancel(gid);
+    sleep(5000);
 
     System.exit(0);
   }

@@ -162,6 +162,7 @@ public class ActionClient<T_ACTION_GOAL extends Message,
    * @see actionlib_msgs.GoalID
    */
   public void sendCancel(GoalID id) {
+    goalManager.cancelGoal();
     cancelPublisher.publish(id);
   }
 
@@ -251,6 +252,11 @@ public class ActionClient<T_ACTION_GOAL extends Message,
    * depends on the application.
    */
   public void gotResult(T_ACTION_RESULT message) {
+    ActionResult<T_ACTION_RESULT> ar = new ActionResult(message);
+    if (ar.getGoalStatusMessage().getGoalId().getId().equals(goalManager.actionGoal.getGoalId())) {
+      goalManager.updateStatus(ar.getGoalStatusMessage().getStatus());
+    }
+    goalManager.resultReceived();
     // Propagate the callback
     if (callbackTarget != null) {
       callbackTarget.resultReceived(message);
