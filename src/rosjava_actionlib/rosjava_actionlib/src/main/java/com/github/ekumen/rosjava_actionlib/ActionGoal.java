@@ -223,7 +223,7 @@ public class ActionGoal<T_ACTION_GOAL extends Message> {
   }
 
   public void setActionGoalMessage(T_ACTION_GOAL agm) {
-
+    goalMessage = agm;
   }
 
   public Message getGoalMessage() {

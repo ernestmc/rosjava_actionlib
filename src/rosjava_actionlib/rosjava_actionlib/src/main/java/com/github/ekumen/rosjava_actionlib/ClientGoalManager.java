@@ -25,8 +25,8 @@ import actionlib_msgs.GoalStatus;
  * @author Ernesto Corbellini ecorbellini@ekumenlabs.com
  */
 public class ClientGoalManager<T_ACTION_GOAL extends Message> {
-  public ActionGoal<T_ACTION_GOAL> actionGoal = null;
-  public ClientStateMachine stateMachine = null;
+  ActionGoal<T_ACTION_GOAL> actionGoal = null;
+  ClientStateMachine stateMachine = null;
 
   public ClientGoalManager(ActionGoal<T_ACTION_GOAL> ag) {
     actionGoal = ag;
@@ -40,7 +40,8 @@ public class ClientGoalManager<T_ACTION_GOAL extends Message> {
 
   public void setGoal(T_ACTION_GOAL agm) {
     ActionGoal<T_ACTION_GOAL> ag = new ActionGoal();
-    ag.setGoalMessage(agm);
+    ag.setActionGoalMessage(agm);
+    setGoal(ag);
   }
 
   public boolean cancelGoal() {
@@ -49,5 +50,13 @@ public class ClientGoalManager<T_ACTION_GOAL extends Message> {
 
   public void updateStatus(int status) {
     stateMachine.transition(status);
+  }
+
+  public int getGoalState() {
+    int ret = -666;
+    if (stateMachine != null) {
+      ret = stateMachine.getState();
+    }
+    return ret;
   }
 }
