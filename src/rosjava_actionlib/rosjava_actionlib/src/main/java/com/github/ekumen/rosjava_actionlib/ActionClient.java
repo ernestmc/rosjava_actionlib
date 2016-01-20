@@ -46,21 +46,21 @@ public class ActionClient<T_ACTION_GOAL extends Message,
 
   T_ACTION_GOAL actionGoal;
   ClientGoalManager<T_ACTION_GOAL> goalManager;
-  String actionGoalType;
-  String actionResultType;
-  String actionFeedbackType;
-  Publisher<T_ACTION_GOAL> goalPublisher = null;
-  Publisher<GoalID> cancelPublisher = null;
-  Subscriber<T_ACTION_RESULT> serverResult = null;
-  Subscriber<T_ACTION_FEEDBACK> serverFeedback = null;
-  Subscriber<GoalStatusArray> serverStatus = null;
-  ConnectedNode node = null;
-  String actionName;
-  ActionClientListener callbackTarget = null;
+  private String actionGoalType;
+  private String actionResultType;
+  private String actionFeedbackType;
+  private Publisher<T_ACTION_GOAL> goalPublisher = null;
+  private Publisher<GoalID> cancelPublisher = null;
+  private Subscriber<T_ACTION_RESULT> serverResult = null;
+  private Subscriber<T_ACTION_FEEDBACK> serverFeedback = null;
+  private Subscriber<GoalStatusArray> serverStatus = null;
+  private ConnectedNode node = null;
+  private String actionName;
+  private ActionClientListener callbackTarget = null;
   GoalIDGenerator goalIdGenerator = null;
-  volatile boolean statusReceivedFlag = false;
-  volatile boolean feedbackPublisherFlag = false;
-  volatile boolean resultPublisherFlag = false;
+  private volatile boolean statusReceivedFlag = false;
+  private volatile boolean feedbackPublisherFlag = false;
+  private volatile boolean resultPublisherFlag = false;
   private Log log = LogFactory.getLog(ActionClient.class);
 
   /**
@@ -263,6 +263,10 @@ public class ActionClient<T_ACTION_GOAL extends Message,
    * depends on the application.
    */
   public void gotFeedback(T_ACTION_FEEDBACK message) {
+    ActionFeedback<T_ACTION_FEEDBACK> af = new ActionFeedback(message);
+    if (af.getGoalStatusMessage().getGoalId().getId().equals(goalManager.actionGoal.getGoalId())) {
+      goalManager.updateStatus(af.getGoalStatusMessage().getStatus());
+    }
     // Propagate the callback
     if (callbackTarget != null) {
       callbackTarget.feedbackReceived(message);
@@ -281,6 +285,8 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     if (gstat != null) {
       // update the goal status tracking
       goalManager.updateStatus(gstat.getStatus());
+    } else {
+      log.info("Status update is not for our goal!");
     }
     // Propagate the callback
     if (callbackTarget != null) {
@@ -300,7 +306,8 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     GoalStatus gstat = null;
     List<GoalStatus> statusList = statusMessage.getStatusList();
     for (GoalStatus s : statusList) {
-      if (s.getGoalId().getId() == goalManager.actionGoal.getGoalId()) {
+      log.info("Found >> " + s.getGoalId().getId() + " when searching for >> " + goalManager.actionGoal.getGoalId());
+      if (s.getGoalId().getId().equals(goalManager.actionGoal.getGoalId())) {
         // this is the goal we are interested in
         gstat = s;
       }
@@ -347,6 +354,9 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     }
   }
 
+  public int getGoalState() {
+    return goalManager.getGoalState();
+  }
   /**
    * Finish the action client. Unregister publishers and listeners.
    */
