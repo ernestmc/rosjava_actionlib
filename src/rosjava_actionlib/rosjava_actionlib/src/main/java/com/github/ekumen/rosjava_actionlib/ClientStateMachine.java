@@ -20,6 +20,8 @@ import java.lang.Exception;
 import actionlib_msgs.GoalStatus;
 import java.util.Vector;
 import java.util.Iterator;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 
 /**
@@ -40,24 +42,58 @@ public class ClientStateMachine {
     public final static int PREEMPTING = 6;
     public final static int DONE = 7;
     public final static int LOST = 8;
+
+    public static String translateState(int state) {
+      String stateName;
+      switch (state) {
+        case INVALID_TRANSITION:
+          stateName = "INVALID_TRANSITION";
+          break;
+        case NO_TRANSITION:
+          stateName = "NO_TRANSITION";
+          break;
+        case WAITING_FOR_GOAL_ACK:
+          stateName = "WAITING_FOR_GOAL_ACK";
+          break;
+        case PENDING:
+          stateName = "PENDING";
+          break;
+        case ACTIVE:
+          stateName = "ACTIVE";
+          break;
+        case WAITING_FOR_RESULT:
+          stateName = "WAITING_FOR_RESULT";
+          break;
+        case WAITING_FOR_CANCEL_ACK:
+          stateName = "WAITING_FOR_CANCEL_ACK";
+          break;
+        case RECALLING:
+          stateName = "RECALLING";
+          break;
+        case PREEMPTING:
+          stateName = "PREEMPTING";
+          break;
+        case DONE:
+          stateName = "DONE";
+          break;
+        case LOST:
+          stateName = "LOST";
+          break;
+        default:
+          stateName = "UNKNOWN_STATE";
+          break;
+      }
+      return stateName;
+    }
   }
 
   int latestGoalStatus;
   int state;
   int nextState;
-
-
-  /**
-   * Constructor
-   */
-  public void ClientStateMachine()
-  {
-    // interface object for the callbacks?
-    // store arguments locally in the object
-    //this.goal = actionGoal;
-  }
+  private Log log = LogFactory.getLog(ActionClient.class);
 
   public synchronized void setState(int state) {
+    log.info("ClientStateMachine - State changed from " + this.state + " to " + state);
     this.state = state;
   }
 
@@ -89,9 +125,7 @@ public class ClientStateMachine {
       // Determine the next state
 
       //if (this.state
-
     }
-
   }
 
   /**
@@ -106,6 +140,8 @@ public class ClientStateMachine {
     // transition to next states
     nextStates = getTransition(goalStatus);
     iterStates = nextStates.iterator();
+
+    log.info("ClientStateMachine - State transition invoked.");
 
     while (iterStates.hasNext()) {
       this.state = iterStates.next();
@@ -432,9 +468,4 @@ public class ClientStateMachine {
   public void markAsLost()
   {
   }
-
-  public void updateResult(int statusResult)
-  {
-  }
-
 }
