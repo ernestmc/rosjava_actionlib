@@ -30,6 +30,9 @@ import actionlib_tutorials.FibonacciResult;
 import actionlib_msgs.GoalStatusArray;
 import actionlib_msgs.GoalID;
 import actionlib_msgs.GoalStatus;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 
 /**
  * Class to test the actionlib client.
@@ -38,6 +41,7 @@ import actionlib_msgs.GoalStatus;
 public class TestClient extends AbstractNodeMain implements ActionClientListener<FibonacciActionFeedback, FibonacciActionResult> {
   private ActionClient ac = null;
   private volatile boolean resultReceived = false;
+  private Log log = LogFactory.getLog(ActionClient.class);
 
   @Override
   public GraphName getDefaultNodeName() {
@@ -49,7 +53,7 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
     ac = new ActionClient<FibonacciActionGoal, FibonacciActionFeedback, FibonacciActionResult>(node, "/fibonacci", FibonacciActionGoal._TYPE, FibonacciActionFeedback._TYPE, FibonacciActionResult._TYPE);
     FibonacciActionGoal goalMessage;
     int repeat = 3;
-    int i;
+    int i = 0;
     String goalId = "fibonacci_test_";
 
     // Attach listener for the callbacks
@@ -66,7 +70,7 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
     // set Fibonacci parameter
     //fibonacciGoal.setOrder(6);
 
-    for (i = 0; i < repeat; i++) {
+    /*for (i = 0; i < repeat; i++) {
       //sleep(10000);
       System.out.println("Sending goal #" + i + "...");
       goalMessage = (FibonacciActionGoal)ac.newGoalMessage();
@@ -74,12 +78,12 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
       ac.sendGoal(goalMessage, goalId + i);
       System.out.println("Goal sent.");
       resultReceived = false;
-    }
+    }*/
 
     // send another message and cancel it
     goalId += i;
     goalMessage = (FibonacciActionGoal)ac.newGoalMessage();
-    goalMessage.getGoal().setOrder(i);
+    goalMessage.getGoal().setOrder(2);
     System.out.println("Sending goal ID: " + goalId + "...");
     ac.sendGoal(goalMessage, goalId);
     System.out.println("Goal sent.");
@@ -122,8 +126,9 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
   public void statusReceived(GoalStatusArray status) {
     List<GoalStatus> statusList = status.getStatusList();
     for(GoalStatus gs:statusList) {
-      //System.out.println("GoalID: " + gs.getGoalId().getId() + " -- GoalStatus: " + gs.getStatus() + " -- " + gs.getText());
+      log.info("GoalID: " + gs.getGoalId().getId() + " -- GoalStatus: " + gs.getStatus() + " -- " + gs.getText());
     }
+    log.info("Current state of our goal: " + ClientStateMachine.ClientStates.translateState(ac.getGoalState()));
   }
 
   void sleep(long msec) {

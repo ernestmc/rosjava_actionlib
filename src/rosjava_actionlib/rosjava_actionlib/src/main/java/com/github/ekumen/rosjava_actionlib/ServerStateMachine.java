@@ -50,7 +50,6 @@ public class ServerStateMachine {
 
   public synchronized int transition(int event) throws Exception {
     int nextState = state;
-
     switch (state) {
       case GoalStatus.PENDING:
         switch (event) {
