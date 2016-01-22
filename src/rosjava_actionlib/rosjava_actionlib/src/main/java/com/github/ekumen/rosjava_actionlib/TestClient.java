@@ -21,6 +21,7 @@ import org.ros.namespace.GraphName;
 import org.ros.node.AbstractNodeMain;
 import org.ros.node.ConnectedNode;
 import org.ros.internal.message.Message;
+import org.ros.message.Duration;
 import actionlib_tutorials.FibonacciActionGoal;
 import actionlib_tutorials.FibonacciActionFeedback;
 import actionlib_tutorials.FibonacciActionResult;
@@ -31,7 +32,6 @@ import actionlib_msgs.GoalStatusArray;
 import actionlib_msgs.GoalID;
 import actionlib_msgs.GoalStatus;
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 
 /**
@@ -39,9 +39,14 @@ import org.apache.commons.logging.LogFactory;
  * @author Ernesto Corbellini ecorbellini@ekumenlabs.com
  */
 public class TestClient extends AbstractNodeMain implements ActionClientListener<FibonacciActionFeedback, FibonacciActionResult> {
+  static {
+    // comment this line if you want logs activated
+    System.setProperty("org.apache.commons.logging.Log",
+      "org.apache.commons.logging.impl.NoOpLog");
+  }
   private ActionClient ac = null;
   private volatile boolean resultReceived = false;
-  private Log log = LogFactory.getLog(ActionClient.class);
+  private Log log;
 
   @Override
   public GraphName getDefaultNodeName() {
@@ -52,48 +57,49 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
   public void onStart(ConnectedNode node) {
     ac = new ActionClient<FibonacciActionGoal, FibonacciActionFeedback, FibonacciActionResult>(node, "/fibonacci", FibonacciActionGoal._TYPE, FibonacciActionFeedback._TYPE, FibonacciActionResult._TYPE);
     FibonacciActionGoal goalMessage;
-    int repeat = 3;
-    int i = 0;
-    String goalId = "fibonacci_test_";
+    GoalID gid;
+    Duration serverTimeout = new Duration(20);
+    boolean serverStarted;
 
+    log = node.getLog();
     // Attach listener for the callbacks
     ac.attachListener(this);
-
-    System.out.println("Waiting for actionlib server to start...");
-    ac.waitForActionServerToStart();
-    System.out.println("actionlib server started.");
+    System.out.println("\nWaiting for action server to start...");
+    serverStarted = ac.waitForActionServerToStart(new Duration(20));
+    if (serverStarted) {
+      System.out.println("Action server started.\n");
+    }
+    else {
+      System.out.println("No actionlib server found after waiting for " + serverTimeout.totalNsecs()/1e9 + " seconds!");
+      System.exit(1);
+    }
 
     // Create Fibonacci goal message
-    //goalMessage = (FibonacciActionGoal)ac.newGoalMessage();
-    //FibonacciGoal fibonacciGoal = goalMessage.getGoal();
-
-    // set Fibonacci parameter
-    //fibonacciGoal.setOrder(6);
-
-    /*for (i = 0; i < repeat; i++) {
-      //sleep(10000);
-      System.out.println("Sending goal #" + i + "...");
-      goalMessage = (FibonacciActionGoal)ac.newGoalMessage();
-      goalMessage.getGoal().setOrder(i*3);
-      ac.sendGoal(goalMessage, goalId + i);
-      System.out.println("Goal sent.");
-      resultReceived = false;
-    }*/
-
-    // send another message and cancel it
-    goalId += i;
     goalMessage = (FibonacciActionGoal)ac.newGoalMessage();
-    goalMessage.getGoal().setOrder(3);
-    //System.out.println("Sending goal ID: " + goalId + "...");
-    //ac.sendGoal(goalMessage, goalId);
+    FibonacciGoal fibonacciGoal = goalMessage.getGoal();
+    // set Fibonacci parameter
+    fibonacciGoal.setOrder(3);
+    System.out.println("Sending goal...");
     ac.sendGoal(goalMessage);
-    GoalID gid = ac.getGoalId(goalMessage);
-    System.out.println("Goal sent. Goal ID: " + gid);
-    //sleep(1000);
-    //System.out.println("Cancelling goal ID: " + goalId);
-    //ac.sendCancel(gid);
-    sleep(5000);
+    gid = ac.getGoalId(goalMessage);
+    System.out.println("Sent goal with ID: " + gid.getId());
+    System.out.println("Waiting for goal to complete...");
+    while (ac.getGoalState() != ClientStateMachine.ClientStates.DONE) {
+      sleep(1);
+    }
+    System.out.println("Goal completed!\n");
 
+    System.out.println("Sending a new goal...");
+    ac.sendGoal(goalMessage);
+    gid = ac.getGoalId(goalMessage);
+    System.out.println("Sent goal with ID: " + gid.getId());
+    System.out.println("Cancelling this goal...");
+    ac.sendCancel(gid);
+    while (ac.getGoalState() != ClientStateMachine.ClientStates.DONE) {
+      sleep(1);
+    }
+    System.out.println("Goal cancelled succesfully.\n");
+    System.out.println("Bye!");
     System.exit(0);
   }
 
@@ -104,11 +110,10 @@ public class TestClient extends AbstractNodeMain implements ActionClientListener
     int i;
 
     resultReceived = true;
-
-    System.out.print("Got Fibonacci result sequence!");
+    System.out.print("Got Fibonacci result sequence: ");
     for (i=0; i<sequence.length; i++)
       System.out.print(Integer.toString(sequence[i]) + " ");
-    System.out.print("\n");
+    System.out.println("");
   }
 
   @Override
