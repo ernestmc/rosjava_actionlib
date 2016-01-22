@@ -25,6 +25,8 @@ import org.ros.node.topic.SubscriberListener;
 import org.ros.internal.node.topic.PublisherIdentifier;
 import org.ros.node.topic.DefaultSubscriberListener;
 import org.ros.message.MessageListener;
+import org.ros.message.Duration;
+import org.ros.message.Time;
 import org.ros.internal.message.Message;
 import java.util.concurrent.TimeUnit;
 import java.util.List;
@@ -332,18 +334,35 @@ public class ActionClient<T_ACTION_GOAL extends Message,
 
   /**
    * Wait for an actionlib server to connect.
+   * @param timeout The maximum amount of time to wait for an action server. If
+   * this value is less than or equal to zero, it will wait forever until a
+   * server is detected.
+   * @return True if the action server was detected before the timeout and
+   * false otherwise.
    */
-  public boolean waitForActionServerToStart() {
+  public boolean waitForActionServerToStart(Duration timeout) {
     boolean res = false;
+    boolean gotTime = true;
+    Time finalTime = node.getCurrentTime().add(timeout);
 
-    while (!res) {
+    while (!res && gotTime) {
       res = goalPublisher.hasSubscribers() &&
         cancelPublisher.hasSubscribers() &&
         feedbackPublisherFlag &&
         resultPublisherFlag &&
         statusReceivedFlag;
+      if (timeout.isPositive()) {
+        gotTime = (node.getCurrentTime().compareTo(finalTime) < 0);
+      }
     }
     return res;
+  }
+
+  /**
+   * Wait indefinately until an actionlib server is connected.
+   */
+  public void waitForActionServerToStart() {
+    waitForActionServerToStart(new Duration(0));
   }
 
   @Override
@@ -360,9 +379,15 @@ public class ActionClient<T_ACTION_GOAL extends Message,
     }
   }
 
+  /**
+   * Get the current state of the action goal as being tracked by the client.
+   * @return The state of the goal.
+   * @see ClientStateMachine.ClientStates
+   */
   public int getGoalState() {
     return goalManager.getGoalState();
   }
+
   /**
    * Finish the action client. Unregister publishers and listeners.
    */
