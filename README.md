@@ -2,19 +2,11 @@
 A pure java implementation of [actionlib](http://wiki.ros.org/actionlib) for [rosjava](http://wiki.ros.org/rosjava).
 Features implemented:
 
-Latest release: [v0.1.0](https://github.com/ernestmc/rosjava_actionlib/releases/tag/v0.1.0)
+Latest release: [v0.2.0](https://github.com/ernestmc/rosjava_actionlib/releases/tag/v0.2.0)
 
-### Basic client:
-* methods for publishing goal and cancel messages.
-* callback interface for status, feedback and result messages.
-* goal state tracking is not implemented yet
-
-### Basic server:
-* methods for publishing result, feedback and status messages.
-* periodic goal status publishing as heartbeat
-* callback interface for accepting goals, and receiving cancel messages.
-* multi-goal state tracking.
-
+New in this release:
+* Added goal state tracking to the client.
+* Added a waitForActionServerToStart method to the client.
 
 ## Requirements:
 * ROS Indigo http://wiki.ros.org/
@@ -26,7 +18,7 @@ You can find a video tutorial showing how to install and test the library follow
 https://youtu.be/FmmsMdEbYFs
 
 ## Downloading:
-1. Download the latest release of the project: https://github.com/ernestmc/rosjava_actionlib/archive/v0.1.0.zip
+1. Download the latest release of the project: https://github.com/ernestmc/rosjava_actionlib/archive/v0.2.0.zip
 2. Unzip it somewhere.
 
 ## Compiling:
@@ -45,23 +37,28 @@ The test client will connect to the fibonacci server and send it a goal. It
 should then receive feedback from the server and a final response. The output
 should look something like this:
 ```
-Sending goal #0...
-Goal sent.
-Got Fibonacci result sequence!0 1
-Sending goal #1...
-Goal sent.
-Feedback from Fibonacci server: 0 1 1
-Got Fibonacci result sequence!0 1 1
-Sending goal #2...
-Goal sent.
-Sending goal ID: fibonacci_test_3...
-Goal sent.
-Feedback from Fibonacci server: 0 1 1
-Got Fibonacci result sequence!Feedback from Fibonacci server:
-0 1 1
-Cancelling goal ID: fibonacci_test_3
-Got Fibonacci result sequence!
+Loading node class: com.github.ekumen.rosjava_actionlib.TestClient
 
+Waiting for action server to start...
+Action server started.
+
+Sending goal...
+Sent goal with ID: /fibonacci_test_client-1-1453494018.17000000
+Waiting for goal to complete...
+Feedback from Fibonacci server: 0 1 1
+Feedback from Fibonacci server: 0 1 1 2
+Feedback from Fibonacci server: 0 1 1 2 3
+Got Fibonacci result sequence: 0 1 1 2 3
+Goal completed!
+
+Sending a new goal...
+Sent goal with ID: /fibonacci_test_client-2-1453494021.25000000
+Cancelling this goal...
+Feedback from Fibonacci server: 0 1 1
+Got Fibonacci result sequence:
+Goal cancelled succesfully.
+
+Bye!
 ```
 
 ## Running a test server:
