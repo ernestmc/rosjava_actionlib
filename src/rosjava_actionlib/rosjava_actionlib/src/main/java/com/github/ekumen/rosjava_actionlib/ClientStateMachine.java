@@ -20,6 +20,8 @@ import java.lang.Exception;
 import actionlib_msgs.GoalStatus;
 import java.util.Vector;
 import java.util.Iterator;
+import java.util.ArrayList;
+import java.util.Arrays;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -87,7 +89,7 @@ public class ClientStateMachine {
     }
   }
 
-  int latestGoalStatus;
+  public int latestGoalStatus;
   int state;
   int nextState;
   private Log log = LogFactory.getLog(ActionClient.class);
@@ -108,23 +110,7 @@ public class ClientStateMachine {
   {
     if (this.state != ClientStates.DONE)
     {
-      /*status = this.goal.findStatus(statusArray); //_find_status_by_goal_id(statusArray, self.action_goal.goal_id.id);
-
-      // we haven't heard of the goal?
-      if (status == 0)
-      {
-        if (this.state != ClientStates.WAITING_FOR_GOAL_ACK && this.state != ClientStates.WAITING_FOR_RESULT && this.state != ClientStates.DONE)
-        {
-          markAsLost();
-        }
-        return;
-      }*/
-
       this.latestGoalStatus = status;
-
-      // Determine the next state
-
-      //if (this.state
     }
   }
 
@@ -453,15 +439,16 @@ public class ClientStateMachine {
    * @return True if the goal can be cancelled, false otherwise.
    */
   public boolean cancel() {
-    boolean ret = false;
-    switch (state) {
-      case ClientStates.WAITING_FOR_GOAL_ACK:
-      case ClientStates.PENDING:
-      case ClientStates.ACTIVE:
-        state = ClientStates.WAITING_FOR_CANCEL_ACK;
-        ret = true;
-        break;
-    }
+    boolean ret;
+    ArrayList<Integer> cancellableStates = new ArrayList<>(Arrays.asList(ClientStates.WAITING_FOR_GOAL_ACK,
+        ClientStates.PENDING, ClientStates.ACTIVE));
+        
+        if (cancellableStates.contains(state)) {
+          state = ClientStates.WAITING_FOR_CANCEL_ACK;
+          ret = true;
+        } else {
+          ret = false;
+        }
     return ret;
   }
 
@@ -471,6 +458,7 @@ public class ClientStateMachine {
     }
   }
 
+  // TODO: implement method
   public void markAsLost()
   {
   }
