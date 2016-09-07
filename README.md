@@ -92,3 +92,10 @@ roslaunch rosjava_actionlib server_demo.launch --screen
 ```
 
 Use Ctrl+C to stop the execution once it's finished.
+
+
+## Running unit tests
+```
+$ cd src/rosjava_actionlib/
+$ ./gradlew test
+```
