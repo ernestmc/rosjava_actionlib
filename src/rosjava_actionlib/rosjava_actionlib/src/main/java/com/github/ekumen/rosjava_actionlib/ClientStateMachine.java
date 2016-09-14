@@ -89,7 +89,7 @@ public class ClientStateMachine {
     }
   }
 
-  public int latestGoalStatus;
+  int latestGoalStatus;
   int state;
   int nextState;
   private Log log = LogFactory.getLog(ActionClient.class);
@@ -439,17 +439,14 @@ public class ClientStateMachine {
    * @return True if the goal can be cancelled, false otherwise.
    */
   public boolean cancel() {
-    boolean ret;
     ArrayList<Integer> cancellableStates = new ArrayList<>(Arrays.asList(ClientStates.WAITING_FOR_GOAL_ACK,
         ClientStates.PENDING, ClientStates.ACTIVE));
-        
-        if (cancellableStates.contains(state)) {
-          state = ClientStates.WAITING_FOR_CANCEL_ACK;
-          ret = true;
-        } else {
-          ret = false;
-        }
-    return ret;
+    boolean shouldCancel = cancellableStates.contains(state);
+
+    if (shouldCancel) {
+      state = ClientStates.WAITING_FOR_CANCEL_ACK;
+    }
+    return shouldCancel;
   }
 
   public void resultReceived() {
@@ -461,5 +458,9 @@ public class ClientStateMachine {
   // TODO: implement method
   public void markAsLost()
   {
+  }
+
+  public int getLatestGoalStatus() {
+    return latestGoalStatus;
   }
 }
